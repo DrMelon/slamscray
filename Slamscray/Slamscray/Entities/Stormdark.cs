@@ -60,6 +60,7 @@ namespace Slamscray.Entities
             myPlatforming.Collider = myCollider;
             myPlatforming.AddCollision(0);
             myPlatforming.JumpStrength = 250.0f;
+            myPlatforming.VariableJumpHeight = false;
             AddComponent(myPlatforming);
 
             
@@ -70,6 +71,16 @@ namespace Slamscray.Entities
         {
 
             //Check Controls
+            if (Global.playerSession.Controller.Down.Down)
+            {
+                myPlatforming.JumpStrength = 200.0f;
+            }
+            else
+            {
+                myPlatforming.JumpStrength = 250.0f;
+            }
+
+
             if(Global.playerSession.Controller.Left.Down)
             {
                 myPlatforming.TargetSpeed.X = -150.0f;

@@ -23,7 +23,7 @@ namespace Slamscray
             Global.theGame = new Game("SLAMSCRAY", 400, 240);
 
             // Viewing resolution is 720p
-            Global.theGame.SetWindow(1280, 720, false, true);
+            Global.theGame.SetWindow(400*2, 240*2, false, true);
 
 
             // Create player session (allows controls)
@@ -42,7 +42,7 @@ namespace Slamscray
             // Initial game state
             Global.theGame.FirstScene = new LevelScene();
 
-            Global.theGame.Color = Color.Cyan;
+            Global.theGame.Color = new Color("736763");
 
            
             
