@@ -19,6 +19,8 @@ namespace Slamscray.Entities
         public Spritemap<string> spriteSheet;
         private PlatformingMovement myPlatforming;
         private BoxCollider myCollider;
+        public bool isAttacking = false;
+        public float attackTime = 0;
 
         public Stormdark(float x = 0, float y = 0)
         {
@@ -26,15 +28,14 @@ namespace Slamscray.Entities
             X = x;
             Y = y;
 
-            
-
             // Create movement
-            myPlatforming = new PlatformingMovement(1000.0f, 1000.0f, 4.5f);
+            myPlatforming = new PlatformingMovement(1600.0f, 1600.0f, 4.5f);
             myPlatforming.UseAxis = false;
 
-            myCollider = new BoxCollider(24, 32, 1);
-
-  
+            // Hitbox substantially smaller than the sprite itself.
+            myCollider = new BoxCollider(24 / 2, 28, 1);
+            myCollider.X = 24 / 4; // Center the hitbox.
+            myCollider.Y += 4;
 
             // Load Spritesheet
             spriteSheet = new Spritemap<string>(Assets.STORMDARK_PUNCH, 24, 32);
@@ -42,7 +43,7 @@ namespace Slamscray.Entities
             // Add animations
             // ------------- name ------- frames -------- framedelays
             spriteSheet.Add("idle", new int[] { 0 }, new float[] { 10f });
-            spriteSheet.Add("shoryuken", new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8 }, new float[] { 2f, 2f, 2f, 2f, 2f, 2f, 2f, 2f, 2f });
+            spriteSheet.Add("shoryuken", new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8 }, new float[] { 4f});
             spriteSheet.Add("airshoryuken", new int[] { 2, 3, 4, 5, 6, 7 }, new float[] { 2f, 2f, 2f, 2f, 2f, 2f });
 
             // Use idle animation to start
@@ -66,9 +67,24 @@ namespace Slamscray.Entities
             
             
         }
-
+        
         public override void Update()
         {
+            // Update attacking state
+            if (isAttacking && attackTime > 0)
+            {
+                attackTime--;
+            }
+            if(attackTime <= 0)
+            {
+                attackTime = 0;
+                isAttacking = false;
+                spriteSheet.Play("idle");
+
+                // checking for shoryuken states bleh bleh bleh
+                myPlatforming.ExtraSpeed.X = 0;
+            }
+
 
             //Check Controls
             if (Global.playerSession.Controller.Down.Down)
@@ -78,6 +94,11 @@ namespace Slamscray.Entities
             else
             {
                 myPlatforming.JumpStrength = 250.0f;
+            }
+
+            if (Global.playerSession.Controller.X.Pressed && !isAttacking)
+            {
+                Attack();
             }
 
 
@@ -111,6 +132,32 @@ namespace Slamscray.Entities
 
 
             base.Update();
+        }
+
+        public void Attack()
+        {
+            // Punch Combo
+
+            // Uppercut
+            if(Global.playerSession.Controller.Up.Down)
+            {
+                isAttacking = true;
+                attackTime = 4 * 9;
+                spriteSheet.Play("shoryuken");
+                // Leap into the air
+                myPlatforming.Speed.Y = -200.0f;
+                if (spriteSheet.FlippedX)
+                {
+                    myPlatforming.ExtraSpeed.X -= 50.0f;
+                    
+                }
+                else
+                {
+                    myPlatforming.ExtraSpeed.X += 50.0f;
+                }
+            }
+
+
         }
 
         public override void Render()

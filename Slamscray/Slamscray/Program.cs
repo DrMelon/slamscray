@@ -35,7 +35,7 @@ namespace Slamscray
             Global.playerSession.Controller.Up.AddKey(Key.Up);
             Global.playerSession.Controller.Down.AddKey(Key.Down);
             Global.playerSession.Controller.A.AddKey(Key.Z);
-            Global.playerSession.Controller.B.AddKey(Key.X);
+            Global.playerSession.Controller.X.AddKey(Key.X);
             Global.playerSession.Controller.Y.AddKey(Key.Space);
             Global.playerSession.Controller.Start.AddKey(Key.Return);
 

@@ -20,8 +20,8 @@ namespace Slamscray.Scenes
     
 
         public OgmoProject levelProject = new OgmoProject(Assets.OGMO_TESTPROJECT, "../../Assets/Graphics/");
-      
 
+        public List<Slamscray.Entities.Enemies.TestEnemy> testEnemies;
         
 
         public LevelScene()
@@ -45,8 +45,15 @@ namespace Slamscray.Scenes
             // Character Placement
             Global.thePlayer = new Stormdark(100, 75);
 
+            // Add enemy
+            testEnemies = new List<Slamscray.Entities.Enemies.TestEnemy>();
+            testEnemies.Add(new Entities.Enemies.TestEnemy(130, 75));
+
+            AddMultiple(testEnemies.ToArray());
+
             Add(Global.thePlayer);
         }
+
 
         public override void UpdateLast()
         {
