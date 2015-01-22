@@ -16,11 +16,14 @@ namespace Slamscray.Entities
     public class Stormdark : Entity
     {
 
+        public enum MoveState { GROUND, SHORYUKEN, FALL };
+
+
         public Spritemap<string> spriteSheet;
         private PlatformingMovement myPlatforming;
         private BoxCollider myCollider;
-        public bool isAttacking = false;
-        public float attackTime = 0;
+        public float shoryukenTime = 0;
+        public MoveState myMoveState;
 
         public Stormdark(float x = 0, float y = 0)
         {
@@ -38,16 +41,22 @@ namespace Slamscray.Entities
             myCollider.Y += 4;
 
             // Load Spritesheet
-            spriteSheet = new Spritemap<string>(Assets.STORMDARK_PUNCH, 24, 32);
+            spriteSheet = new Spritemap<string>(Assets.STORMDARK_SHEET, 24, 32);
 
             // Add animations
             // ------------- name ------- frames -------- framedelays
             spriteSheet.Add("idle", new int[] { 0 }, new float[] { 10f });
-            spriteSheet.Add("shoryuken", new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8 }, new float[] { 4f});
-            spriteSheet.Add("airshoryuken", new int[] { 2, 3, 4, 5, 6, 7 }, new float[] { 2f, 2f, 2f, 2f, 2f, 2f });
+            spriteSheet.Add("shoryuken", new int[] { 1, 2, 3, 4, 5, 6, 7, 8 }, new float[] { 4f });
+            spriteSheet.Add("airshoryuken", new int[] { 2, 3, 4, 5, 6, 7, 8 }, new float[] { 4f });
+            spriteSheet.Add("jumpingup", new int[] { 9, 10, 11 }, new float[] { 2f });
+            spriteSheet.Add("jumpmid", new int[] { 12 }, new float[] { 10f });
+            spriteSheet.Add("fall", new int[] { 13, 14, 15 }, new float[] { 2f });
+            spriteSheet.Add("run", new int[] { 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26 }, new float[] { 4f });
 
             // Use idle animation to start
             spriteSheet.Play("idle");
+
+            
 
             // Set display to use this spritesheet
             Graphic = spriteSheet;
@@ -70,20 +79,9 @@ namespace Slamscray.Entities
         
         public override void Update()
         {
-            // Update attacking state
-            if (isAttacking && attackTime > 0)
-            {
-                attackTime--;
-            }
-            if(attackTime <= 0)
-            {
-                attackTime = 0;
-                isAttacking = false;
-                spriteSheet.Play("idle");
-
-                // checking for shoryuken states bleh bleh bleh
-                myPlatforming.ExtraSpeed.X = 0;
-            }
+            
+            // Update shoryuken state
+            CheckShoryuken();
 
 
             //Check Controls
@@ -96,7 +94,7 @@ namespace Slamscray.Entities
                 myPlatforming.JumpStrength = 250.0f;
             }
 
-            if (Global.playerSession.Controller.X.Pressed && !isAttacking)
+            if (Global.playerSession.Controller.X.Pressed && myMoveState != MoveState.SHORYUKEN)
             {
                 Attack();
             }
@@ -129,10 +127,13 @@ namespace Slamscray.Entities
             }
 
 
+            // Update Animation
+            UpdateAnimations();
 
 
             base.Update();
         }
+
 
         public void Attack()
         {
@@ -141,15 +142,13 @@ namespace Slamscray.Entities
             // Uppercut
             if(Global.playerSession.Controller.Up.Down)
             {
-                isAttacking = true;
-                attackTime = 4 * 9;
-                spriteSheet.Play("shoryuken");
+                myMoveState = MoveState.SHORYUKEN;
+                shoryukenTime = 4 * 9;
                 // Leap into the air
                 myPlatforming.Speed.Y = -200.0f;
                 if (spriteSheet.FlippedX)
                 {
                     myPlatforming.ExtraSpeed.X -= 50.0f;
-                    
                 }
                 else
                 {
@@ -157,8 +156,69 @@ namespace Slamscray.Entities
                 }
             }
 
-
         }
+
+        public void CheckShoryuken()
+        {
+            // Update shoryuken state
+            if (myMoveState == MoveState.SHORYUKEN && shoryukenTime > 0)
+            {
+                shoryukenTime--;
+            }
+            if (shoryukenTime <= 0)
+            {
+                shoryukenTime = 0;
+                myMoveState = MoveState.GROUND;
+                myPlatforming.ExtraSpeed.X = 0;
+
+                // Check air
+                if (!myPlatforming.OnGround)
+                {
+                    myMoveState = MoveState.FALL;
+                }
+            }
+        }
+
+        public void UpdateAnimations()
+        {
+            if(myMoveState == MoveState.GROUND)
+            {
+                // Check if running
+                if (Math.Abs(myPlatforming.TargetSpeed.X) > 0)
+                {
+                    spriteSheet.Play("run");
+                }
+
+               
+                else
+                {
+                    spriteSheet.Play("idle");
+                }
+            }
+            if (myMoveState == MoveState.SHORYUKEN)
+            {
+                spriteSheet.Play("shoryuken");
+            }
+            if (myMoveState == MoveState.FALL)
+            {
+                // Check Y speed
+                if(myPlatforming.Speed.Y < -20)
+                {
+                    spriteSheet.Play("jumpingup");
+                }
+
+                else if(myPlatforming.Speed.Y > 20)
+                {
+                    spriteSheet.Play("fall");
+                }
+
+                else
+                {
+                    spriteSheet.Play("jumpmid");
+                }
+            }
+        }
+
 
         public override void Render()
         {
