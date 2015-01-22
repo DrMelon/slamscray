@@ -75,6 +75,7 @@ namespace Slamscray.Entities
 
             
             
+            
         }
         
         public override void Update()
@@ -164,6 +165,24 @@ namespace Slamscray.Entities
             if (myMoveState == MoveState.SHORYUKEN && shoryukenTime > 0)
             {
                 shoryukenTime--;
+
+                //[DEBUG] Push particles!
+                Particle newParticle = new Particle(X + spriteSheet.HalfWidth, Y + spriteSheet.HalfHeight, Rand.Choose<string>(new string[] {Assets.STARTICLE_FLASH_PINK, Assets.STARTICLE_FLASH_CYAN}), 27, 27) { };
+                
+                
+                newParticle.FinalX = X - Rand.Float(-65.0f, 65.0f);
+                newParticle.FinalY = Y - Rand.Float(-65.0f, 65.0f);
+                newParticle.LifeSpan = 60.0f;
+                newParticle.Animate = true;
+                newParticle.FrameCount = 10;
+                newParticle.Layer = 10;
+                
+               // newParticle.Image.Frames = 10;
+                
+                this.Scene.Add(newParticle);
+                
+                newParticle.Start();
+
             }
             if (shoryukenTime <= 0)
             {
