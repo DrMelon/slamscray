@@ -20,11 +20,14 @@ namespace Slamscray.Entities.Enemies
         public Spritemap<string> spriteSheet;
         private PlatformingMovement myPlatforming;
         private BoxCollider myCollider;
+        private Components.HealthDamageComponent myHealth;
 
         private int moveTimer;
         private bool isMoving;
         private int nextMove;
         private int moveDir;
+        private bool inDamageMode;
+        private Slamscray.Components.HealthDamageComponent.AttackInfo atk;
 
         public TestEnemy(float x = 0, float y = 0)
         {
@@ -48,6 +51,7 @@ namespace Slamscray.Entities.Enemies
             spriteSheet.Add("idle", new int[] { 0, 1 }, new float[] { 65f, 8f });
             spriteSheet.Add("hop", new int[] { 0, 1, 2 }, new float[] { 4f, 4f, 6f });
             spriteSheet.Add("fall", new int[] { 3 }, new float[] { 10f });
+            spriteSheet.Add("hurt", new int[] { 4, 5 }, new float[] { 2f, 2f });
 
             // Use idle animation to start
             spriteSheet.Play("idle");
@@ -55,11 +59,19 @@ namespace Slamscray.Entities.Enemies
             // Set display to use this spritesheet
             Graphic = spriteSheet;
 
+            // Health/damage component
+            myHealth = new Slamscray.Components.HealthDamageComponent();
+            myHealth.MaximumHealth = 1000;
+            myHealth.Health = 1000;
+            myHealth.OnDamageTaken = this.OnTakeDamage;
+            AddComponent(myHealth);
+
             // Add Components
             AddCollider(myCollider);
             this.Collider = myCollider;
             myPlatforming.Collider = myCollider;
             myPlatforming.AddCollision(0);
+            
             AddComponent(myPlatforming);
 
             
@@ -67,11 +79,13 @@ namespace Slamscray.Entities.Enemies
 
         public override void Update()
         {
+            AnimationUpdate();
+
 
             // Move left and right occasionally.
             if (!isMoving)
             {
-                spriteSheet.Play("idle");
+                
                 myPlatforming.TargetSpeed.X = 0;
                 
                 
@@ -79,7 +93,6 @@ namespace Slamscray.Entities.Enemies
             else
             {
                 moveTimer--;
-                spriteSheet.Play("hop");
 
                 myPlatforming.TargetSpeed.X = 40.0f * moveDir;
                 
@@ -112,13 +125,9 @@ namespace Slamscray.Entities.Enemies
                 spriteSheet.FlippedX = false;
             }
 
-            // Set falling animation
-            if(myPlatforming.OnGround == false)
-            {
-                spriteSheet.Play("fall");
-            }
 
             myPlatforming.Speed.X = Util.Approach(myPlatforming.Speed.X, myPlatforming.TargetSpeed.X, myPlatforming.CurrentAccel);
+            myPlatforming.ExtraSpeed.X = Util.Approach(myPlatforming.ExtraSpeed.X, 0, myPlatforming.CurrentAccel / 32); // Skid to a halt when knocked around.
 
             if (myPlatforming.Speed.X < 0 && myPlatforming.AgainstWallLeft)
             {
@@ -137,5 +146,54 @@ namespace Slamscray.Entities.Enemies
         {
             base.Render();
         }
+
+        public void AnimationUpdate()
+        {
+            // Choose which animation is playing.
+            if(myHealth.Invulnerable)
+            {
+                spriteSheet.Play("hurt");
+                return;
+            }
+
+            if(!isMoving)
+            {
+                spriteSheet.Play("idle");
+            }
+            else
+            {
+                spriteSheet.Play("hop");
+            }
+
+            if (!myPlatforming.OnGround)
+            {
+                spriteSheet.Play("fall");
+            }
+            
+        }
+
+        public void OnTakeDamage(Slamscray.Components.HealthDamageComponent.AttackInfo atk)
+        {
+            // We got hurt! Read the attack information & apply it.
+            if(atk.facingLeft)
+            {
+                myPlatforming.ExtraSpeed.X -= atk.impulseAmt;
+            }
+            else
+            {
+                myPlatforming.ExtraSpeed.X += atk.impulseAmt;
+            }
+
+            myPlatforming.ExtraSpeed.Y -= atk.impulseAmt * 2;
+
+            
+            
+
+
+
+        }
+
+
+        
     }
 }

@@ -39,6 +39,13 @@ namespace Slamscray.Scenes
             levelProject.DisplayGrids = false;
             levelProject.LoadLevel(Assets.OGMO_TESTLEVEL, this);
             levelProject.UseCameraBounds = true;
+
+
+            // Make sure Level's entities are in BG
+            foreach (Entity levelEnt in levelProject.Entities.Values)
+            {
+                levelEnt.Layer = 20;
+            }
             
             
 
@@ -48,10 +55,11 @@ namespace Slamscray.Scenes
             // Add enemy
             testEnemies = new List<Slamscray.Entities.Enemies.TestEnemy>();
             testEnemies.Add(new Entities.Enemies.TestEnemy(130, 75));
-
             AddMultiple(testEnemies.ToArray());
-
             Add(Global.thePlayer);
+
+
+
         }
 
 

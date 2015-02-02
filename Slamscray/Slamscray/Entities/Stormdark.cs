@@ -18,10 +18,17 @@ namespace Slamscray.Entities
 
         public enum MoveState { GROUND, SHORYUKEN, FALL };
 
+        // Constants
+        public static float SHORYUKEN_DAMAGE = 5.0f;
+        public static float SHORYUKEN_INVTIME = 30.0f;
+        public static float SHORYUKEN_PUSHAMT = 125.0f;
 
         public Spritemap<string> spriteSheet;
         private PlatformingMovement myPlatforming;
         private BoxCollider myCollider;
+        private Components.HealthDamageComponent myHealth;
+
+
         public float shoryukenTime = 0;
         public MoveState myMoveState;
 
@@ -64,6 +71,10 @@ namespace Slamscray.Entities
             // Setup controls
             myPlatforming.JumpButton = Global.playerSession.Controller.A;
 
+            // Health/damage component
+            myHealth = new Slamscray.Components.HealthDamageComponent();
+            AddComponent(myHealth);
+
             // Add Components
             AddCollider(myCollider);
             this.Collider = myCollider;
@@ -72,7 +83,7 @@ namespace Slamscray.Entities
             myPlatforming.JumpStrength = 250.0f;
             myPlatforming.VariableJumpHeight = false;
             AddComponent(myPlatforming);
-
+            
             
             
             
@@ -175,13 +186,41 @@ namespace Slamscray.Entities
                 newParticle.LifeSpan = 60.0f;
                 newParticle.Animate = true;
                 newParticle.FrameCount = 10;
-                newParticle.Layer = 10;
+                newParticle.Layer = this.Layer + 1; // Always spawn behind player
                 
-               // newParticle.Image.Frames = 10;
+            
                 
                 this.Scene.Add(newParticle);
                 
                 newParticle.Start();
+
+
+                // Damage anything we hit with a healthdamage component, and shove it around!
+                List<Entity> collisionList = myCollider.CollideEntities(X, Y, myCollider.Tags);
+                foreach (Entity ent in collisionList)
+                {
+                    if(ent == this)
+                    {
+                        // Don't collide with yourself!
+                        continue;
+                    }
+                    Slamscray.Components.HealthDamageComponent dam = ent.GetComponent<Slamscray.Components.HealthDamageComponent>();
+                    if (dam != null && dam.Invulnerable == false)
+                    {
+                        // Set damage accordingly.
+                        // Set up attack info
+                        Slamscray.Components.HealthDamageComponent.AttackInfo atk = new Components.HealthDamageComponent.AttackInfo();
+                        atk.facingLeft = spriteSheet.FlippedX;
+                        atk.impulseAmt = SHORYUKEN_PUSHAMT;
+                        dam.Attacked(5, atk);
+                        dam.Invulnerable = true;
+                        dam.InvulnTime = SHORYUKEN_INVTIME;
+
+
+        
+                    }
+                }
+
 
             }
             if (shoryukenTime <= 0)
@@ -195,6 +234,8 @@ namespace Slamscray.Entities
                 {
                     myMoveState = MoveState.FALL;
                 }
+
+                
             }
         }
 
