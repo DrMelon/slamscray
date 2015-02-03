@@ -16,7 +16,7 @@
     <Width>8000</Width>
     <Height>8000</Height>
   </LevelMaximumSize>
-  <Filename>C:\Programming\Slamscray\slamscray\Slamscray\Slamscray\Assets\Levels\Slamscray_test.oep</Filename>
+  <Filename>Z:\ActiveProjects\Slamscray\Slamscray\Slamscray\Assets\Levels\Slamscray_test.oep</Filename>
   <AngleMode>Radians</AngleMode>
   <CameraEnabled>true</CameraEnabled>
   <CameraSize>
@@ -38,6 +38,18 @@
       </ScrollFactor>
       <Color A="255" R="0" G="0" B="0" />
       <ExportMode>Bitstring</ExportMode>
+    </LayerDefinition>
+    <LayerDefinition xsi:type="TileLayerDefinition">
+      <Name>BG</Name>
+      <Grid>
+        <Width>16</Width>
+        <Height>16</Height>
+      </Grid>
+      <ScrollFactor>
+        <X>1</X>
+        <Y>1</Y>
+      </ScrollFactor>
+      <ExportMode>XMLCoords</ExportMode>
     </LayerDefinition>
     <LayerDefinition xsi:type="EntityLayerDefinition">
       <Name>Ents</Name>
@@ -62,11 +74,32 @@
       </ScrollFactor>
       <ExportMode>XMLCoords</ExportMode>
     </LayerDefinition>
+    <LayerDefinition xsi:type="TileLayerDefinition">
+      <Name>Decoration</Name>
+      <Grid>
+        <Width>16</Width>
+        <Height>16</Height>
+      </Grid>
+      <ScrollFactor>
+        <X>1</X>
+        <Y>1</Y>
+      </ScrollFactor>
+      <ExportMode>XMLCoords</ExportMode>
+    </LayerDefinition>
   </LayerDefinitions>
   <Tilesets>
     <Tileset>
       <Name>Test</Name>
       <FilePath>..\Graphics\terrain.png</FilePath>
+      <TileSize>
+        <Width>16</Width>
+        <Height>16</Height>
+      </TileSize>
+      <TileSep>0</TileSep>
+    </Tileset>
+    <Tileset>
+      <Name>Cave_1</Name>
+      <FilePath>..\Graphics\terrain_2.png</FilePath>
       <TileSize>
         <Width>16</Width>
         <Height>16</Height>
@@ -91,6 +124,21 @@
       <NodesDefinition Enabled="false" Limit="-1" DrawMode="None" Ghost="false" />
     </EntityDefinition>
     <EntityDefinition Name="Enemy" Limit="-1" ResizableX="false" ResizableY="false" Rotatable="false" RotateIncrement="15">
+      <Size>
+        <Width>24</Width>
+        <Height>24</Height>
+      </Size>
+      <Origin>
+        <X>0</X>
+        <Y>0</Y>
+      </Origin>
+      <ImageDefinition DrawMode="Rectangle" ImagePath="" Tiled="false">
+        <RectColor A="255" R="0" G="255" B="0" />
+      </ImageDefinition>
+      <ValueDefinitions />
+      <NodesDefinition Enabled="false" Limit="-1" DrawMode="None" Ghost="false" />
+    </EntityDefinition>
+    <EntityDefinition Name="TestEnemy" Limit="-1" ResizableX="false" ResizableY="false" Rotatable="false" RotateIncrement="15">
       <Size>
         <Width>24</Width>
         <Height>24</Height>

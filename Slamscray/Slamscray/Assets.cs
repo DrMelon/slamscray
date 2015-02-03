@@ -16,13 +16,16 @@ namespace Slamscray
     class Assets
     {
         // Path References
-        public const string TERRAIN_SHEET = "../../Assets/Graphics/terrain.png";
         public const string STORMDARK_SHEET = "../../Assets/Graphics/stormdark_sheet.png";
         public const string TESTENEMY = "../../Assets/Graphics/testenemy_sheet.png";
+
+        public const string HYPE_PARTICLE_CYAN = "../../Assets/Graphics/Hype_Cyan.png";
         public const string STARTICLE_FLASH_PINK = "../../Assets/Graphics/Starticle_Pink_Flash.png";
         public const string STARTICLE_FLASH_CYAN = "../../Assets/Graphics/Starticle_Cyan_Flash.png";
+
         public const string OGMO_TESTPROJECT = "../../Assets/Levels/Slamscray_test.oep";
         public const string OGMO_TESTLEVEL = "../../Assets/Levels/Testbed_1.oel";
+        public const string OGMO_TESTLEVEL2 = "../../Assets/Levels/Testbed_2.oel";
         
 
         // Loading function (loads all assets into memory)

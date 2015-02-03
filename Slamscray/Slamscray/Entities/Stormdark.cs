@@ -217,6 +217,20 @@ namespace Slamscray.Entities
                         dam.InvulnTime = SHORYUKEN_INVTIME;
 
 
+                        // Create hype particles, build hype meter
+                        /*
+                        float randX, randY;
+                        randX = Rand.Float(-24, 24);
+                        randY = Rand.Float(-24, 24);
+                        Particle hypeParticle = new Particle(ent.X + randX, ent.Y + randY, new ImageSet(Assets.HYPE_PARTICLE_CYAN, 24, 24));
+                        hypeParticle.FinalX = this.X;
+                        hypeParticle.FinalY = this.Y;
+                        hypeParticle.LifeSpan = 30.0f;
+                        hypeParticle.Animate = true;
+                        hypeParticle.FrameCount = 5;
+                        hypeParticle.Layer = this.Layer - 1; // Always spawn in front of player
+                        this.Scene.Add(hypeParticle);
+                         * */
         
                     }
                 }

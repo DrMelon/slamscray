@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml;
 
 namespace Slamscray.Entities.Enemies
 {
@@ -28,6 +29,8 @@ namespace Slamscray.Entities.Enemies
         private int moveDir;
         private bool inDamageMode;
         private Slamscray.Components.HealthDamageComponent.AttackInfo atk;
+
+
 
         public TestEnemy(float x = 0, float y = 0)
         {
@@ -139,6 +142,14 @@ namespace Slamscray.Entities.Enemies
             }
 
 
+            // Destroy self if fall off world.
+            if(Y > 8000)
+            {
+                this.RemoveSelf();
+            }
+
+
+
             base.Update();
         }
 
@@ -185,13 +196,16 @@ namespace Slamscray.Entities.Enemies
             }
 
             myPlatforming.ExtraSpeed.Y -= atk.impulseAmt * 2;
-
-            
-            
-
-
-
         }
+
+        // Allows creation from level editor
+        public static void CreateFromXML(Scene scene, XmlAttributeCollection attributes)
+        {
+            // Create enemy at location
+            TestEnemy newEnemy = new TestEnemy(int.Parse(attributes["x"].Value), int.Parse(attributes["y"].Value));
+            scene.Add(newEnemy);
+        }
+
 
 
         
