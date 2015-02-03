@@ -23,8 +23,10 @@ namespace Slamscray
             Global.theGame = new Game("SLAMSCRAY", 400, 240);
 
             // Viewing resolution is 720p
-            Global.theGame.SetWindow(400*2, 240*2, false, true);
+            //Global.theGame.SetWindow(400*2, 240*2, false, true);
+            Global.theGame.SetWindow(1366, 768, true, true);
 
+            
 
             // Create player session (allows controls)
             Global.playerSession = Global.theGame.AddSession("Player");
@@ -36,7 +38,7 @@ namespace Slamscray
             Global.playerSession.Controller.Down.AddKey(Key.Down);
             Global.playerSession.Controller.A.AddKey(Key.Z);
             Global.playerSession.Controller.X.AddKey(Key.X);
-            Global.playerSession.Controller.Y.AddKey(Key.Space);
+            Global.playerSession.Controller.Y.AddKey(Key.C);
             Global.playerSession.Controller.Start.AddKey(Key.Return);
 
             // Initial game state

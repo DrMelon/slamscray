@@ -16,12 +16,16 @@ namespace Slamscray.Entities
     public class Stormdark : Entity
     {
 
-        public enum MoveState { GROUND, SHORYUKEN, FALL };
+        public enum MoveState { GROUND, SHORYUKEN, FALL, PUNCH, GRASP, SLAMUP, SLAMDOWN };
 
         // Constants
         public static float SHORYUKEN_DAMAGE = 5.0f;
         public static float SHORYUKEN_INVTIME = 30.0f;
         public static float SHORYUKEN_PUSHAMT = 125.0f;
+
+        public static float PUNCH_DAMAGE = 1.0f;
+        public static float PUNCH_INVTIME = 30.0f;
+        public static float PUNCH_PUSHAMT = 50.0f;
 
         public Spritemap<string> spriteSheet;
         private PlatformingMovement myPlatforming;
@@ -30,6 +34,7 @@ namespace Slamscray.Entities
 
 
         public float shoryukenTime = 0;
+        public float punchTime = 0;
         public MoveState myMoveState;
 
         public Stormdark(float x = 0, float y = 0)
@@ -59,6 +64,8 @@ namespace Slamscray.Entities
             spriteSheet.Add("jumpmid", new int[] { 12 }, new float[] { 10f });
             spriteSheet.Add("fall", new int[] { 13, 14, 15 }, new float[] { 2f });
             spriteSheet.Add("run", new int[] { 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26 }, new float[] { 4f });
+            spriteSheet.Add("punch", new int[] { 27, 29 }, new float[] { 2f, 8f });
+            spriteSheet.Add("grasp", new int[] { 28, 29, 30, 31, 32, 33, 34, 35, 36}, new float[] { 4f, 4f, 2f, 2f, 2f, 2f, 8f, 16f, 16f } );
 
             // Use idle animation to start
             spriteSheet.Play("idle");
@@ -92,8 +99,6 @@ namespace Slamscray.Entities
         public override void Update()
         {
             
-            // Update shoryuken state
-            CheckShoryuken();
 
 
             //Check Controls
@@ -106,12 +111,16 @@ namespace Slamscray.Entities
                 myPlatforming.JumpStrength = 250.0f;
             }
 
-            if (Global.playerSession.Controller.X.Pressed && myMoveState != MoveState.SHORYUKEN)
+            if (Global.playerSession.Controller.X.Pressed)
             {
                 Attack();
             }
+            if (Global.playerSession.Controller.Y.Pressed)
+            {
+                Grasp();
+            }
 
-
+            
             if(Global.playerSession.Controller.Left.Down)
             {
                 myPlatforming.TargetSpeed.X = -150.0f;
@@ -128,6 +137,10 @@ namespace Slamscray.Entities
             }
 
             myPlatforming.Speed.X = Util.Approach(myPlatforming.Speed.X, myPlatforming.TargetSpeed.X, myPlatforming.CurrentAccel);
+            if (myMoveState != MoveState.SHORYUKEN && myMoveState != MoveState.PUNCH)
+            {
+                myPlatforming.ExtraSpeed.X = Util.Approach(myPlatforming.ExtraSpeed.X, 0, myPlatforming.CurrentAccel);
+            }
 
             if (myPlatforming.Speed.X < 0 && myPlatforming.AgainstWallLeft)
             {
@@ -138,21 +151,39 @@ namespace Slamscray.Entities
                 myPlatforming.Speed.X = 0;
             }
 
-
+            // Update shoryuken state
+            if (myMoveState != MoveState.SHORYUKEN)
+            {
+                CheckPunch();
+            }
+            if (myMoveState != MoveState.PUNCH)
+            {
+                CheckShoryuken();
+            }
+            
             // Update Animation
+            UpdateMoveStates();
             UpdateAnimations();
 
 
+            
             base.Update();
         }
 
+       
+
+        public void Grasp()
+        {
+            // Grapple attacks / throws
+            myMoveState = MoveState.GRASP;
+
+        }
 
         public void Attack()
         {
-            // Punch Combo
-
+          
             // Uppercut
-            if(Global.playerSession.Controller.Up.Down)
+            if(Global.playerSession.Controller.Up.Down && myMoveState != MoveState.SHORYUKEN)
             {
                 myMoveState = MoveState.SHORYUKEN;
                 shoryukenTime = 4 * 9;
@@ -168,32 +199,42 @@ namespace Slamscray.Entities
                 }
             }
 
+            // Normal Punch
+            else if (myPlatforming.OnGround == true)
+            {
+                myMoveState = MoveState.PUNCH;
+                punchTime = 10; //10 frames
+
+            }
+        }
+
+        public void Starticles()
+        {
+            //Push Particles!
+            Particle newParticle = new Particle(X + spriteSheet.HalfWidth, Y + spriteSheet.HalfHeight, Rand.Choose<string>(new string[] { Assets.STARTICLE_FLASH_PINK, Assets.STARTICLE_FLASH_CYAN }), 27, 27) { };
+
+
+            newParticle.FinalX = X - Rand.Float(-65.0f, 65.0f);
+            newParticle.FinalY = Y - Rand.Float(-65.0f, 65.0f);
+            newParticle.LifeSpan = 60.0f;
+            newParticle.Animate = true;
+            newParticle.FrameCount = 10;
+            newParticle.Layer = this.Layer + 1; // Always spawn behind player
+            this.Scene.Add(newParticle);
+
+            newParticle.Start();
         }
 
         public void CheckShoryuken()
         {
+
             // Update shoryuken state
             if (myMoveState == MoveState.SHORYUKEN && shoryukenTime > 0)
             {
                 shoryukenTime--;
 
-                //[DEBUG] Push particles!
-                Particle newParticle = new Particle(X + spriteSheet.HalfWidth, Y + spriteSheet.HalfHeight, Rand.Choose<string>(new string[] {Assets.STARTICLE_FLASH_PINK, Assets.STARTICLE_FLASH_CYAN}), 27, 27) { };
-                
-                
-                newParticle.FinalX = X - Rand.Float(-65.0f, 65.0f);
-                newParticle.FinalY = Y - Rand.Float(-65.0f, 65.0f);
-                newParticle.LifeSpan = 60.0f;
-                newParticle.Animate = true;
-                newParticle.FrameCount = 10;
-                newParticle.Layer = this.Layer + 1; // Always spawn behind player
-                
-            
-                
-                this.Scene.Add(newParticle);
-                
-                newParticle.Start();
 
+                Starticles();
 
                 // Damage anything we hit with a healthdamage component, and shove it around!
                 List<Entity> collisionList = myCollider.CollideEntities(X, Y, myCollider.Tags);
@@ -212,25 +253,12 @@ namespace Slamscray.Entities
                         Slamscray.Components.HealthDamageComponent.AttackInfo atk = new Components.HealthDamageComponent.AttackInfo();
                         atk.facingLeft = spriteSheet.FlippedX;
                         atk.impulseAmt = SHORYUKEN_PUSHAMT;
-                        dam.Attacked(5, atk);
+                        dam.Attacked(SHORYUKEN_DAMAGE, atk);
                         dam.Invulnerable = true;
                         dam.InvulnTime = SHORYUKEN_INVTIME;
 
-
-                        // Create hype particles, build hype meter
-                        /*
-                        float randX, randY;
-                        randX = Rand.Float(-24, 24);
-                        randY = Rand.Float(-24, 24);
-                        Particle hypeParticle = new Particle(ent.X + randX, ent.Y + randY, new ImageSet(Assets.HYPE_PARTICLE_CYAN, 24, 24));
-                        hypeParticle.FinalX = this.X;
-                        hypeParticle.FinalY = this.Y;
-                        hypeParticle.LifeSpan = 30.0f;
-                        hypeParticle.Animate = true;
-                        hypeParticle.FrameCount = 5;
-                        hypeParticle.Layer = this.Layer - 1; // Always spawn in front of player
-                        this.Scene.Add(hypeParticle);
-                         * */
+                        Global.theCameraShaker.ShakeCamera(10f);
+                        
         
                     }
                 }
@@ -240,21 +268,73 @@ namespace Slamscray.Entities
             if (shoryukenTime <= 0)
             {
                 shoryukenTime = 0;
-                myMoveState = MoveState.GROUND;
-                myPlatforming.ExtraSpeed.X = 0;
+                myPlatforming.ExtraSpeed.X = 0;            
+            }
+        }
 
+        public void CheckPunch()
+        {
+            if (myMoveState == MoveState.PUNCH && punchTime > 0)
+            {
+                // Speed down
+                myPlatforming.Speed.X = Util.Approach(myPlatforming.Speed.X, 0, myPlatforming.CurrentAccel / 1.3f);
+
+
+                punchTime--;
+
+                // Damage anything we hit with a healthdamage component, and shove it around!
+                List<Entity> collisionList = myCollider.CollideEntities(X, Y, myCollider.Tags);
+                foreach (Entity ent in collisionList)
+                {
+                    if (ent == this)
+                    {
+                        // Don't collide with yourself!
+                        continue;
+                    }
+                    Slamscray.Components.HealthDamageComponent dam = ent.GetComponent<Slamscray.Components.HealthDamageComponent>();
+                    if (dam != null && dam.Invulnerable == false)
+                    {
+                        // Set damage accordingly.
+                        // Set up attack info
+                        Slamscray.Components.HealthDamageComponent.AttackInfo atk = new Components.HealthDamageComponent.AttackInfo();
+                        atk.facingLeft = spriteSheet.FlippedX;
+                        atk.impulseAmt = PUNCH_PUSHAMT;
+                        dam.Attacked(PUNCH_DAMAGE, atk);
+                        dam.Invulnerable = true;
+                        dam.InvulnTime = PUNCH_INVTIME;
+
+                        
+                        
+                     
+                    }
+                }
+            }
+            if(punchTime <= 0)
+            {
+                punchTime = 0;
+            }
+        }
+
+        public void UpdateMoveStates()
+        {
+            if ((punchTime <= 0) && (shoryukenTime <= 0))
+            {
+                myMoveState = MoveState.GROUND;
                 // Check air
                 if (!myPlatforming.OnGround)
                 {
                     myMoveState = MoveState.FALL;
                 }
-
-                
             }
         }
 
         public void UpdateAnimations()
         {
+            if (myMoveState == MoveState.GRASP)
+            {
+                spriteSheet.Play("grasp");
+                return;
+            }
             if(myMoveState == MoveState.GROUND)
             {
                 // Check if running
@@ -262,12 +342,16 @@ namespace Slamscray.Entities
                 {
                     spriteSheet.Play("run");
                 }
-
+                
                
                 else
                 {
                     spriteSheet.Play("idle");
                 }
+            }
+            if (myMoveState == MoveState.PUNCH)
+            {
+                spriteSheet.Play("punch");
             }
             if (myMoveState == MoveState.SHORYUKEN)
             {

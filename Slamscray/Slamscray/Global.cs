@@ -2,10 +2,9 @@
 //@Purpose: A global variable container. Probably unwise to use.
 
 using Otter;
-
 using Slamscray;
 using Slamscray.Entities;
-
+using Slamscray.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,6 +19,7 @@ namespace Slamscray
         public static Game theGame = null;
         public static Session playerSession = null;
         public static Stormdark thePlayer = null;
+        public static CameraShaker theCameraShaker = null;
      
 
     }
