@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets.cs" />
+    <Compile Include="Entities\HUD.cs" />
     <Compile Include="Utils\CameraShaker.cs" />
     <Compile Include="Components\HealthDamageComponent.cs" />
     <Compile Include="Entities\Enemies\TestEnemy.cs" />

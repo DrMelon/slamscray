@@ -106,6 +106,7 @@ namespace Slamscray.Entities
             myPlatforming.VariableJumpHeight = false;
             AddComponent(myPlatforming);
 
+            
             // Make sure to add to pausegroup.
             Group = Global.GROUP_ACTIVEOBJECTS;
 
@@ -123,13 +124,17 @@ namespace Slamscray.Entities
         
         public override void Update()
         {
+            
+
+
             // Check hype
             if(hypeMode)
             {
                 hypeAmt -= 0.1f;
                 if(hypeAmt <= 0)
                 {
-                    hypeMode = false;
+                    // INFINITE FOR TODAY
+                    //hypeMode = false;
                 }
             }
             if(hypeAmt >= 100.0f)
@@ -427,6 +432,7 @@ namespace Slamscray.Entities
                         // Freeze game a sec
                         Global.paused = true;
                         Global.pauseTime = PUNCH_FREEZEAMT;
+                        
                         this.Scene.PauseGroup(Global.GROUP_ACTIVEOBJECTS);                      
                         
                         if(hypeMode)

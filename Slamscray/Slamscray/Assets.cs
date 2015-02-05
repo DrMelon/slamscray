@@ -23,6 +23,9 @@ namespace Slamscray
         public const string STARTICLE_FLASH_PINK = "../../Assets/Graphics/Starticle_Pink_Flash.png";
         public const string STARTICLE_FLASH_CYAN = "../../Assets/Graphics/Starticle_Cyan_Flash.png";
 
+        public const string HYPE_BAR = "../../Assets/Graphics/hypebar_test.png"; //44x9
+        public const string HYPE_BAR_BACK = "../../Assets/Graphics/hypebar_back.png"; //44x11;
+
         public const string OGMO_TESTPROJECT = "../../Assets/Levels/Slamscray_test.oep";
         public const string OGMO_TESTLEVEL = "../../Assets/Levels/Testbed_1.oel";
         public const string OGMO_TESTLEVEL2 = "../../Assets/Levels/Testbed_2.oel";

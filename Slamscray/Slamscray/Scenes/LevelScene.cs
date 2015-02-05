@@ -50,12 +50,14 @@ namespace Slamscray.Scenes
 
             // Character Placement
             Global.thePlayer = new Stormdark(100, 75);
+            Global.theHUD = new HUD(5, 5);
             Global.theCameraShaker = new Utils.CameraShaker();
 
             Add(Global.theCameraShaker);
 
             // Add player to scene
             Add(Global.thePlayer);
+            Add(Global.theHUD);
             
 
 

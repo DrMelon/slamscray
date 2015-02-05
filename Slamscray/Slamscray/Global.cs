@@ -19,6 +19,7 @@ namespace Slamscray
         public static Game theGame = null;
         public static Session playerSession = null;
         public static Stormdark thePlayer = null;
+        public static HUD theHUD = null;
         public static CameraShaker theCameraShaker = null;
         public static float pauseTime = 0;
         public static bool paused = false;     
