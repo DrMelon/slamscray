@@ -77,7 +77,8 @@ namespace Slamscray.Entities.Enemies
             
             AddComponent(myPlatforming);
 
-            
+            // Add to pausegroup.
+            Group = Global.GROUP_ACTIVEOBJECTS;
         }
 
         public override void Update()
@@ -163,8 +164,13 @@ namespace Slamscray.Entities.Enemies
             // Choose which animation is playing.
             if(myHealth.Invulnerable)
             {
+                this.Graphic.ShakeX = 2;
                 spriteSheet.Play("hurt");
                 return;
+            }
+            else
+            {
+                this.Graphic.ShakeX = 0;
             }
 
             if(!isMoving)

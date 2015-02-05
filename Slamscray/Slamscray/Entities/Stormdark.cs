@@ -20,12 +20,18 @@ namespace Slamscray.Entities
 
         // Constants
         public static float SHORYUKEN_DAMAGE = 5.0f;
-        public static float SHORYUKEN_INVTIME = 30.0f;
+        public static float SHORYUKEN_INVTIME = 45.0f;
         public static float SHORYUKEN_PUSHAMT = 125.0f;
+        public static float SHORYUKEN_FREEZEAMT = 5.0f;
+        //public static float SHORYUKEN_FREEZEAMT = 18.0f; // Great for a more powerful hit... hype mode?
 
         public static float PUNCH_DAMAGE = 1.0f;
         public static float PUNCH_INVTIME = 30.0f;
         public static float PUNCH_PUSHAMT = 50.0f;
+        public static float PUNCH_FREEZEAMT = 0.0f;
+
+        public static float MOVESPEED = 150.0f;
+        public static float HYPEMOVESPEED = 180.0f;
 
         public Spritemap<string> spriteSheet;
         private PlatformingMovement myPlatforming;
@@ -36,6 +42,9 @@ namespace Slamscray.Entities
         public float shoryukenTime = 0;
         public float punchTime = 0;
         public MoveState myMoveState;
+
+        public bool hypeMode = false; // Hypemode increases damage etc
+        public float hypeAmt = 0.0f; // When hypeamt reaches 100, it reduces until 0 and hypemode is engaged.
 
         public Stormdark(float x = 0, float y = 0)
         {
@@ -90,15 +99,35 @@ namespace Slamscray.Entities
             myPlatforming.JumpStrength = 250.0f;
             myPlatforming.VariableJumpHeight = false;
             AddComponent(myPlatforming);
-            
-            
+
+            // Make sure to add to pausegroup.
+            Group = Global.GROUP_ACTIVEOBJECTS;
             
             
         }
         
         public override void Update()
         {
-            
+            // Check hype
+            if(hypeMode)
+            {
+                hypeAmt -= 0.1f;
+                if(hypeAmt <= 0)
+                {
+                    hypeMode = false;
+                }
+            }
+            if(hypeAmt >= 100.0f)
+            {
+                hypeAmt = 100;
+                if (!hypeMode)
+                {
+                    Otter.Flash f = new Flash(Color.White);
+                    this.Scene.Add(f);
+                    hypeMode = true;
+                    
+                }
+            }
 
 
             //Check Controls
@@ -123,12 +152,20 @@ namespace Slamscray.Entities
             
             if(Global.playerSession.Controller.Left.Down)
             {
-                myPlatforming.TargetSpeed.X = -150.0f;
+                myPlatforming.TargetSpeed.X = -MOVESPEED;
+                if(hypeMode)
+                {
+                    myPlatforming.TargetSpeed.X = -HYPEMOVESPEED;
+                }
                 spriteSheet.FlippedX = true;
             }
             else if (Global.playerSession.Controller.Right.Down)
             {
-                myPlatforming.TargetSpeed.X = 150.0f;
+                myPlatforming.TargetSpeed.X = MOVESPEED;
+                if (hypeMode)
+                {
+                    myPlatforming.TargetSpeed.X = HYPEMOVESPEED;
+                }
                 spriteSheet.FlippedX = false;
             }
             else
@@ -155,17 +192,30 @@ namespace Slamscray.Entities
             if (myMoveState != MoveState.SHORYUKEN)
             {
                 CheckPunch();
+                
             }
             if (myMoveState != MoveState.PUNCH)
             {
                 CheckShoryuken();
+                
+            }
+            if (shoryukenTime > 0)
+            {
+                shoryukenTime--;
+            }
+            if (punchTime > 0)
+            {
+                punchTime--;
             }
             
             // Update Animation
             UpdateMoveStates();
             UpdateAnimations();
 
-
+            if (hypeMode)
+            {
+                MoveTrail();
+            }
             
             base.Update();
         }
@@ -176,7 +226,7 @@ namespace Slamscray.Entities
         {
             // Grapple attacks / throws
             myMoveState = MoveState.GRASP;
-
+            hypeAmt += 50.0f;
         }
 
         public void Attack()
@@ -219,10 +269,43 @@ namespace Slamscray.Entities
             newParticle.LifeSpan = 60.0f;
             newParticle.Animate = true;
             newParticle.FrameCount = 10;
-            newParticle.Layer = this.Layer + 1; // Always spawn behind player
+            newParticle.Layer = this.Layer + 2; // Always spawn behind player
             this.Scene.Add(newParticle);
 
             newParticle.Start();
+        }
+
+        public void MoveTrail()
+        {
+            if (Global.theGame.Timer % 1.0f == 0)
+            {
+                //Push Particles!
+                Particle newParticle = new Particle(X + spriteSheet.HalfWidth, Y + spriteSheet.HalfHeight, spriteSheet.Texture, spriteSheet.Width, spriteSheet.Height);
+                //newParticle.Graphic = this.Graphic;
+                //newParticle.Graphic.Color = Color.Cyan;
+
+                newParticle.FinalX = X + spriteSheet.HalfWidth;//+ Rand.Float(-2, 2);
+                newParticle.FinalY = Y + spriteSheet.HalfHeight;
+                newParticle.FinalAlpha = 0.2f;
+                newParticle.Alpha = 0.2f;
+                newParticle.LifeSpan = 5.0f;
+                newParticle.Image.Frame = this.spriteSheet.CurrentFrame;
+                newParticle.FrameCount = this.spriteSheet.Frames;
+                newParticle.Animate = false;
+                newParticle.Frames = new List<int>() { this.spriteSheet.CurrentFrame };
+                newParticle.Layer = this.Layer + 1; // Always spawn behind player
+                newParticle.FlipX = this.spriteSheet.FlippedX;
+                newParticle.Color = Color.White;
+                newParticle.FinalColor = Color.White;
+                newParticle.Graphic = newParticle.Image;
+                newParticle.Graphic.ShakeX = 6;
+                newParticle.Graphic.ShakeY = 6;
+                newParticle.Group = Global.GROUP_ACTIVEOBJECTS;
+                this.Scene.Add(newParticle);
+                
+            }
+
+            
         }
 
         public void CheckShoryuken()
@@ -231,10 +314,12 @@ namespace Slamscray.Entities
             // Update shoryuken state
             if (myMoveState == MoveState.SHORYUKEN && shoryukenTime > 0)
             {
-                shoryukenTime--;
+             
 
-
-                Starticles();
+                if (hypeMode)
+                {
+                    Starticles();
+                }
 
                 // Damage anything we hit with a healthdamage component, and shove it around!
                 List<Entity> collisionList = myCollider.CollideEntities(X, Y, myCollider.Tags);
@@ -257,9 +342,22 @@ namespace Slamscray.Entities
                         dam.Invulnerable = true;
                         dam.InvulnTime = SHORYUKEN_INVTIME;
 
-                        Global.theCameraShaker.ShakeCamera(10f);
                         
-        
+                        // Freeze game a sec
+                        Global.paused = true;
+                        Global.pauseTime = SHORYUKEN_FREEZEAMT;
+                        if(hypeMode)
+                        {
+                            Global.pauseTime = 18.0f;
+                            Global.theCameraShaker.ShakeCamera(20.0f);
+                            dam.InvulnTime = SHORYUKEN_INVTIME / 3;
+                        }
+                        else
+                        {
+                            //Global.theCameraShaker.ShakeCamera(10.0f);
+                        }
+                        this.Scene.PauseGroup(Global.GROUP_ACTIVEOBJECTS);
+                        hypeAmt += 5.0f;
                     }
                 }
 
@@ -280,7 +378,7 @@ namespace Slamscray.Entities
                 myPlatforming.Speed.X = Util.Approach(myPlatforming.Speed.X, 0, myPlatforming.CurrentAccel / 1.3f);
 
 
-                punchTime--;
+                
 
                 // Damage anything we hit with a healthdamage component, and shove it around!
                 List<Entity> collisionList = myCollider.CollideEntities(X, Y, myCollider.Tags);
@@ -303,9 +401,17 @@ namespace Slamscray.Entities
                         dam.Invulnerable = true;
                         dam.InvulnTime = PUNCH_INVTIME;
 
+                        // Freeze game a sec
+                        Global.paused = true;
+                        Global.pauseTime = PUNCH_FREEZEAMT;
+                        this.Scene.PauseGroup(Global.GROUP_ACTIVEOBJECTS);                      
                         
-                        
-                     
+                        if(hypeMode)
+                        {
+                            Global.theCameraShaker.ShakeCamera();
+                            Starticles();
+                        }
+                        hypeAmt += 5.0f;
                     }
                 }
             }

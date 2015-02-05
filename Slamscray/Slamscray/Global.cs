@@ -20,7 +20,10 @@ namespace Slamscray
         public static Session playerSession = null;
         public static Stormdark thePlayer = null;
         public static CameraShaker theCameraShaker = null;
-     
+        public static float pauseTime = 0;
+        public static bool paused = false;     
+
+        public static int GROUP_ACTIVEOBJECTS = 1;
 
     }
 }

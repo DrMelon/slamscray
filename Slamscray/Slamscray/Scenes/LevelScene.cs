@@ -62,6 +62,26 @@ namespace Slamscray.Scenes
         }
 
 
+        public override void Update()
+        {
+            // Don't update if paused.
+            if(Global.paused == true)
+            {
+                Global.pauseTime--;
+                if (Global.pauseTime <= 0)
+                {
+                    Global.pauseTime = 0;
+                    Global.paused = false;
+                    PauseGroupToggle(Global.GROUP_ACTIVEOBJECTS);
+                }
+                return;
+            }
+
+
+            base.Update();
+        }
+
+
         public override void UpdateLast()
         {
 
