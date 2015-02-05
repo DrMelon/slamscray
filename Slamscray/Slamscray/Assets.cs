@@ -26,6 +26,13 @@ namespace Slamscray
         public const string OGMO_TESTPROJECT = "../../Assets/Levels/Slamscray_test.oep";
         public const string OGMO_TESTLEVEL = "../../Assets/Levels/Testbed_1.oel";
         public const string OGMO_TESTLEVEL2 = "../../Assets/Levels/Testbed_2.oel";
+
+        public const string SND_WHIFFPUNCH = "../../Assets/Sound/whiff.wav";
+        public const string SND_SHING = "../../Assets/Sound/shing.wav";
+        public const string SND_PUNCH = "../../Assets/Sound/punch.wav";
+        public const string SND_PUNCH_HYPE = "../../Assets/Sound/hype_punch.wav";
+        public const string SND_SHORYUKEN = "../../Assets/Sound/shoryuken.wav";
+        public const string SND_SHORYUKEN_HYPE = "../../Assets/Sound/hype_shoryuken.wav";
         
 
         // Loading function (loads all assets into memory)

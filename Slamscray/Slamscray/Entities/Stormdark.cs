@@ -39,6 +39,12 @@ namespace Slamscray.Entities
         private Components.HealthDamageComponent myHealth;
 
 
+        private Sound punchSound;
+        private Sound hypePunchSound;
+        private Sound shoryukenSound;
+        private Sound hypeShoryukenSound;
+        private Sound shingSound;
+
         public float shoryukenTime = 0;
         public float punchTime = 0;
         public MoveState myMoveState;
@@ -102,6 +108,15 @@ namespace Slamscray.Entities
 
             // Make sure to add to pausegroup.
             Group = Global.GROUP_ACTIVEOBJECTS;
+
+            // Load sounds
+            punchSound = new Sound(Assets.SND_PUNCH);
+            hypePunchSound = new Sound(Assets.SND_PUNCH_HYPE);
+
+            shoryukenSound = new Sound(Assets.SND_SHORYUKEN);
+            hypeShoryukenSound = new Sound(Assets.SND_SHORYUKEN_HYPE);
+
+            shingSound = new Sound(Assets.SND_SHING);
             
             
         }
@@ -122,6 +137,7 @@ namespace Slamscray.Entities
                 hypeAmt = 100;
                 if (!hypeMode)
                 {
+                    shingSound.Play();
                     Otter.Flash f = new Flash(Color.White);
                     this.Scene.Add(f);
                     hypeMode = true;
@@ -351,10 +367,13 @@ namespace Slamscray.Entities
                             Global.pauseTime = 18.0f;
                             Global.theCameraShaker.ShakeCamera(20.0f);
                             dam.InvulnTime = SHORYUKEN_INVTIME / 3;
+                            // Play sound
+                            hypeShoryukenSound.Play();
                         }
                         else
                         {
-                            //Global.theCameraShaker.ShakeCamera(10.0f);
+                            // Play sound
+                            shoryukenSound.Play();
                         }
                         this.Scene.PauseGroup(Global.GROUP_ACTIVEOBJECTS);
                         hypeAmt += 5.0f;
@@ -397,6 +416,10 @@ namespace Slamscray.Entities
                         Slamscray.Components.HealthDamageComponent.AttackInfo atk = new Components.HealthDamageComponent.AttackInfo();
                         atk.facingLeft = spriteSheet.FlippedX;
                         atk.impulseAmt = PUNCH_PUSHAMT;
+                        if(hypeMode)
+                        {
+                            atk.impulseAmt = PUNCH_PUSHAMT * 2;
+                        }
                         dam.Attacked(PUNCH_DAMAGE, atk);
                         dam.Invulnerable = true;
                         dam.InvulnTime = PUNCH_INVTIME;
@@ -410,6 +433,13 @@ namespace Slamscray.Entities
                         {
                             Global.theCameraShaker.ShakeCamera();
                             Starticles();
+                            //Playsound
+                            hypePunchSound.Play();
+                        }
+                        else
+                        {
+                            //Playsound
+                            punchSound.Play();
                         }
                         hypeAmt += 5.0f;
                     }
