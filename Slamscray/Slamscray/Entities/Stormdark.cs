@@ -16,7 +16,7 @@ namespace Slamscray.Entities
     public class Stormdark : Entity
     {
 
-        public enum MoveState { GROUND, SHORYUKEN, FALL, PUNCH, GRASP, SLAMUP, SLAMDOWN };
+        public enum MoveState { GROUND, SHORYUKEN, FALL, PUNCH, GRASP, SLAMUP, SLAMDOWN, DASHLEFT, DASHRIGHT };
 
         // Constants
         public static float SHORYUKEN_DAMAGE = 5.0f;
@@ -47,6 +47,8 @@ namespace Slamscray.Entities
 
         public float shoryukenTime = 0;
         public float punchTime = 0;
+        public float dashTime = 0;
+
         public MoveState myMoveState;
         public bool shoryukened = false; // used to prevent repeated air-ryukens.
 
@@ -60,7 +62,7 @@ namespace Slamscray.Entities
             Y = y;
 
             // Create movement
-            myPlatforming = new PlatformingMovement(1600.0f, 1600.0f, 4.5f);
+            myPlatforming = new PlatformingMovement(3200.0f, 3200.0f, 4.5f);
             myPlatforming.UseAxis = false;
 
             // Hitbox substantially smaller than the sprite itself.
@@ -82,6 +84,7 @@ namespace Slamscray.Entities
             spriteSheet.Add("run", new int[] { 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26 }, new float[] { 4f });
             spriteSheet.Add("punch", new int[] { 27, 29 }, new float[] { 2f, 8f });
             spriteSheet.Add("grasp", new int[] { 28, 29, 30, 31, 32, 33, 34, 35, 36}, new float[] { 4f, 4f, 2f, 2f, 2f, 2f, 8f, 16f, 16f } );
+            spriteSheet.Add("dashflash", new int[] { 37, 38, 39, 40}, new float[] {3f, 3f, 3f, 3f});
 
             // Use idle animation to start
             spriteSheet.Play("idle");
@@ -168,7 +171,7 @@ namespace Slamscray.Entities
             }
             if (Global.playerSession.Controller.Y.Pressed)
             {
-                Grasp();
+                DashAct();
             }
 
             
@@ -196,7 +199,7 @@ namespace Slamscray.Entities
             }
 
             myPlatforming.Speed.X = Util.Approach(myPlatforming.Speed.X, myPlatforming.TargetSpeed.X, myPlatforming.CurrentAccel);
-            if (myMoveState != MoveState.SHORYUKEN && myMoveState != MoveState.PUNCH)
+            if (myMoveState != MoveState.SHORYUKEN && myMoveState != MoveState.PUNCH && myMoveState != MoveState.DASHLEFT && myMoveState != MoveState.DASHRIGHT)
             {
                 myPlatforming.ExtraSpeed.X = Util.Approach(myPlatforming.ExtraSpeed.X, 0, myPlatforming.CurrentAccel);
             }
@@ -211,16 +214,22 @@ namespace Slamscray.Entities
             }
 
             // Update shoryuken state
-            if (myMoveState != MoveState.SHORYUKEN)
+            if (myMoveState != MoveState.SHORYUKEN && myMoveState != MoveState.DASHLEFT && myMoveState != MoveState.DASHRIGHT)
             {
                 CheckPunch();
                 
             }
-            if (myMoveState != MoveState.PUNCH)
+            if (myMoveState != MoveState.PUNCH && myMoveState != MoveState.DASHLEFT && myMoveState != MoveState.DASHRIGHT)
             {
-                CheckShoryuken();
-                
+                CheckShoryuken();   
             }
+
+            if (myMoveState != MoveState.SHORYUKEN && myMoveState != MoveState.PUNCH)
+            {
+                CheckDash();
+            }
+
+
             if (shoryukenTime > 0)
             {
                 shoryukenTime--;
@@ -228,6 +237,10 @@ namespace Slamscray.Entities
             if (punchTime > 0)
             {
                 punchTime--;
+            }
+            if (dashTime > 0)
+            {
+                dashTime--;
             }
             
             // Update Animation
@@ -246,9 +259,23 @@ namespace Slamscray.Entities
 
        
 
-        public void Grasp()
+        public void DashAct()
         {
-            // Grapple attacks / throws
+            // Dashing etc
+            if(Global.playerSession.Controller.Left.Down)
+            {
+                // Dash left
+                myMoveState = MoveState.DASHLEFT;
+                dashTime = 15.0f;
+
+            }
+            if(Global.playerSession.Controller.Right.Down)
+            {
+                // Dash right
+                myMoveState = MoveState.DASHRIGHT;
+                dashTime = 15.0f;
+
+            }
             
         }
 
@@ -489,16 +516,34 @@ namespace Slamscray.Entities
             }
         }
 
+        public void CheckDash()
+        {
+            if((myMoveState == MoveState.DASHLEFT || myMoveState == MoveState.DASHRIGHT) && dashTime > 0)
+            {
+                if(myMoveState == MoveState.DASHLEFT)
+                {
+                    myPlatforming.ExtraSpeed.X = -650.0f;
+                }
+                if (myMoveState == MoveState.DASHRIGHT)
+                {
+                    myPlatforming.ExtraSpeed.X = 650.0f;
+                }
+            }
+        }
+
         public void UpdateMoveStates()
         {
-            if ((punchTime <= 0) && (shoryukenTime <= 0))
+            if ((punchTime <= 0) && (shoryukenTime <= 0) && (dashTime <= 0))
             {
-                myMoveState = MoveState.GROUND;
-                // Check air
-                if (!myPlatforming.OnGround)
-                {
-                    myMoveState = MoveState.FALL;
-                }
+
+                    myMoveState = MoveState.GROUND;
+                    // Check air
+                    if (!myPlatforming.OnGround)
+                    {
+                        myMoveState = MoveState.FALL;
+                    }
+                
+
             }
 
             if(myPlatforming.HasJumped == false)
@@ -553,6 +598,11 @@ namespace Slamscray.Entities
                 {
                     spriteSheet.Play("jumpmid");
                 }
+            }
+            if(myMoveState == MoveState.DASHLEFT || myMoveState == MoveState.DASHRIGHT)
+            {
+                spriteSheet.Play("dashflash");
+                HypeWhiteTrail();
             }
         }
 
