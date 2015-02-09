@@ -30,6 +30,8 @@ namespace Slamscray.Entities.Enemies
         private bool inDamageMode;
         private Slamscray.Components.HealthDamageComponent.AttackInfo atk;
 
+        private float deathTime = 60.0f;
+        private bool dead = false;
 
 
         public TestEnemy(float x = 0, float y = 0)
@@ -55,6 +57,7 @@ namespace Slamscray.Entities.Enemies
             spriteSheet.Add("hop", new int[] { 0, 1, 2 }, new float[] { 4f, 4f, 6f });
             spriteSheet.Add("fall", new int[] { 3 }, new float[] { 10f });
             spriteSheet.Add("hurt", new int[] { 4, 5 }, new float[] { 2f, 2f });
+            spriteSheet.Add("dead", new int[] { 5, 6 }, new float[] { 2f, 1f });
 
             // Use idle animation to start
             spriteSheet.Play("idle");
@@ -64,9 +67,10 @@ namespace Slamscray.Entities.Enemies
 
             // Health/damage component
             myHealth = new Slamscray.Components.HealthDamageComponent();
-            myHealth.MaximumHealth = 1000;
-            myHealth.Health = 1000;
+            myHealth.MaximumHealth = 15;
+            myHealth.Health = 15;
             myHealth.OnDamageTaken = this.OnTakeDamage;
+            myHealth.StartDeath = this.DeathAnim;
             AddComponent(myHealth);
 
             // Add Components
@@ -81,25 +85,22 @@ namespace Slamscray.Entities.Enemies
             Group = Global.GROUP_ACTIVEOBJECTS;
         }
 
-        public override void Update()
+        public void SelfAI()
         {
-            AnimationUpdate();
-
-
             // Move left and right occasionally.
             if (!isMoving)
             {
-                
+
                 myPlatforming.TargetSpeed.X = 0;
-                
-                
+
+
             }
             else
             {
                 moveTimer--;
 
                 myPlatforming.TargetSpeed.X = 40.0f * moveDir;
-                
+
 
                 if (moveTimer <= 0)
                 {
@@ -117,6 +118,21 @@ namespace Slamscray.Entities.Enemies
                 isMoving = true;
                 moveTimer = Rand.Int(60, 120);
                 moveDir = Rand.Choose<int>(new int[] { -1, 1 });
+            }
+        }
+
+        public override void Update()
+        {
+            AnimationUpdate();
+            if (!dead)
+            {
+
+                SelfAI();
+
+            }
+            else
+            {
+                deathTime--;
             }
 
             // Set sprite orientation
@@ -142,10 +158,15 @@ namespace Slamscray.Entities.Enemies
                 myPlatforming.Speed.X = 0;
             }
 
+            if (Math.Abs(myPlatforming.ExtraSpeed.X) > 300 || Math.Abs(myPlatforming.ExtraSpeed.Y) > 300)
+            {
+                SmokeParticle();
+            }
 
             // Destroy self if fall off world.
-            if(Y > 8000)
+            if(deathTime < 0 || Y > 8000)
             {
+                SmokePuff();
                 this.RemoveSelf();
             }
 
@@ -162,6 +183,17 @@ namespace Slamscray.Entities.Enemies
         public void AnimationUpdate()
         {
             // Choose which animation is playing.
+            if(dead)
+            {
+                this.Graphic.ShakeX = 2;
+                spriteSheet.FlippedY = true;
+                spriteSheet.Play("dead");
+                
+                
+                return;
+            }
+
+
             if(myHealth.Invulnerable)
             {
                 this.Graphic.ShakeX = 2;
@@ -186,6 +218,8 @@ namespace Slamscray.Entities.Enemies
             {
                 spriteSheet.Play("fall");
             }
+
+
             
         }
 
@@ -202,6 +236,51 @@ namespace Slamscray.Entities.Enemies
             }
 
             myPlatforming.ExtraSpeed.Y -= atk.impulseAmt * 2;
+        }
+
+        public void DeathAnim()
+        {
+            // We died. 
+            dead = true;
+            deathTime = 60.0f;
+        }
+
+        public void HypeWhiteTrail()
+        {
+            // Nice little white trail, fairly short, made of a shrinking white circle.
+            Particle newParticle = new Particle(X + spriteSheet.HalfWidth, Y + spriteSheet.HalfHeight, Assets.PARTICLE_WHITE, 16, 16);
+            newParticle.FinalX = X + spriteSheet.HalfWidth;
+            newParticle.FinalY = Y + spriteSheet.HalfHeight;
+            newParticle.FinalScaleX = 0;
+            newParticle.FinalScaleY = 0;
+            newParticle.LifeSpan = 20.0f;
+            newParticle.Layer = this.Layer + 10;
+            this.Scene.Add(newParticle);
+        }
+
+        public void SmokePuff()
+        {
+            for(int i = 0; i < 15; i++)
+            {
+                SmokeParticle();
+            }
+        }
+        public void SmokeParticle()
+        {
+            //Push Particles!
+            Particle newParticle = new Particle(X + spriteSheet.HalfWidth, Y + spriteSheet.HalfHeight, Assets.PARTICLE_SMOKE, 16, 16) { };
+
+
+            newParticle.FinalX = X - Rand.Float(-25.0f, 25.0f);
+            newParticle.FinalY = Y - Rand.Float(-25.0f, 25.0f);
+            newParticle.LifeSpan = 30.0f;
+            newParticle.Animate = true;
+            newParticle.FrameCount = 6;
+            newParticle.Layer = this.Layer + 2; // Always spawn behind player
+            newParticle.FinalAngle = Rand.Float(-180, 180);
+            this.Scene.Add(newParticle);
+
+            newParticle.Start();
         }
 
         // Allows creation from level editor

@@ -31,12 +31,10 @@ namespace Slamscray.Components
         public bool Invulnerable = false;
         public float InvulnTime = 0;
         public bool Dead = false;
-        public float DeathTime = 0;
-        public float DeathTimeMax = 60.0f;
 
         // This Action is called when an object takes damage
         public Action<AttackInfo> OnDamageTaken;
-
+        public Action StartDeath;
 
         public override void Update()
         {
@@ -57,21 +55,15 @@ namespace Slamscray.Components
             if(Health <= 0 && Dead != true)
             {
                 Dead = true;
-                DeathTime += DeathTimeMax;
-            }
 
-            // Check if dead
-            if(Dead)
-            {
-                DeathTime--;
-            }
-
-            // Delete entity when dead
-            if (DeathTime <= 0 && Dead)
-            {
-                if (this.Entity != null)
+                if (this.Entity != null && StartDeath == null) // no death action, die by removing
                 {
                     this.Entity.RemoveSelf();
+                }
+
+                if(this.StartDeath != null)
+                {
+                    StartDeath();
                 }
             }
 

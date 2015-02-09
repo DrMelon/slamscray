@@ -22,6 +22,8 @@ namespace Slamscray
         public const string HYPE_PARTICLE_CYAN = "../../Assets/Graphics/Hype_Cyan.png";
         public const string STARTICLE_FLASH_PINK = "../../Assets/Graphics/Starticle_Pink_Flash.png";
         public const string STARTICLE_FLASH_CYAN = "../../Assets/Graphics/Starticle_Cyan_Flash.png";
+        public const string PARTICLE_WHITE = "../../Assets/Graphics/Whiteball.png";
+        public const string PARTICLE_SMOKE = "../../Assets/Graphics/smoke.png";
 
         public const string HYPE_BAR = "../../Assets/Graphics/hypebar_test.png"; //44x9
         public const string HYPE_BAR_BACK = "../../Assets/Graphics/hypebar_back.png"; //44x11;

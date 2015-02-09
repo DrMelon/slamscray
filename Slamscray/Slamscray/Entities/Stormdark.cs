@@ -26,7 +26,7 @@ namespace Slamscray.Entities
         //public static float SHORYUKEN_FREEZEAMT = 18.0f; // Great for a more powerful hit... hype mode?
 
         public static float PUNCH_DAMAGE = 1.0f;
-        public static float PUNCH_INVTIME = 30.0f;
+        public static float PUNCH_INVTIME = 10.0f;
         public static float PUNCH_PUSHAMT = 50.0f;
         public static float PUNCH_FREEZEAMT = 0.0f;
 
@@ -48,6 +48,7 @@ namespace Slamscray.Entities
         public float shoryukenTime = 0;
         public float punchTime = 0;
         public MoveState myMoveState;
+        public bool shoryukened = false; // used to prevent repeated air-ryukens.
 
         public bool hypeMode = false; // Hypemode increases damage etc
         public float hypeAmt = 0.0f; // When hypeamt reaches 100, it reduces until 0 and hypemode is engaged.
@@ -133,8 +134,8 @@ namespace Slamscray.Entities
                 hypeAmt -= 0.1f;
                 if(hypeAmt <= 0)
                 {
-                    // INFINITE FOR TODAY
-                    //hypeMode = false;
+                    // off!
+                    hypeMode = false;
                 }
             }
             if(hypeAmt >= 100.0f)
@@ -233,6 +234,8 @@ namespace Slamscray.Entities
             UpdateMoveStates();
             UpdateAnimations();
 
+
+
             if (hypeMode)
             {
                 MoveTrail();
@@ -246,20 +249,26 @@ namespace Slamscray.Entities
         public void Grasp()
         {
             // Grapple attacks / throws
-            myMoveState = MoveState.GRASP;
-            hypeAmt += 50.0f;
+            
         }
 
         public void Attack()
         {
           
             // Uppercut
-            if(Global.playerSession.Controller.Up.Down && myMoveState != MoveState.SHORYUKEN)
+            if (Global.playerSession.Controller.Up.Down && myMoveState != MoveState.SHORYUKEN && shoryukened == false)
             {
+
+
+
                 myMoveState = MoveState.SHORYUKEN;
                 shoryukenTime = 4 * 9;
                 // Leap into the air
                 myPlatforming.Speed.Y = -200.0f;
+                if(hypeMode)
+                {
+                    myPlatforming.Speed.Y = -300.0f;
+                }
                 if (spriteSheet.FlippedX)
                 {
                     myPlatforming.ExtraSpeed.X -= 50.0f;
@@ -329,13 +338,27 @@ namespace Slamscray.Entities
             
         }
 
+        public void HypeWhiteTrail()
+        {
+            // Nice little white trail, fairly short, made of a shrinking white circle.
+            Particle newParticle = new Particle(X + spriteSheet.HalfWidth, Y + spriteSheet.HalfHeight, Assets.PARTICLE_WHITE, 16, 16);
+            newParticle.FinalX = X + spriteSheet.HalfWidth;
+            newParticle.FinalY = Y + spriteSheet.HalfHeight;
+            newParticle.FinalScaleX = 0;
+            newParticle.FinalScaleY = 0;
+            newParticle.LifeSpan = 20.0f;
+            newParticle.Layer = this.Layer + 10;
+            this.Scene.Add(newParticle);
+        }
+
         public void CheckShoryuken()
         {
 
             // Update shoryuken state
             if (myMoveState == MoveState.SHORYUKEN && shoryukenTime > 0)
             {
-             
+                myPlatforming.HasJumped = true; //counts as a jump!
+                shoryukened = true;    
 
                 if (hypeMode)
                 {
@@ -352,14 +375,22 @@ namespace Slamscray.Entities
                         continue;
                     }
                     Slamscray.Components.HealthDamageComponent dam = ent.GetComponent<Slamscray.Components.HealthDamageComponent>();
-                    if (dam != null && dam.Invulnerable == false)
+                    if (dam != null && dam.Invulnerable == false && dam.Dead == false)
                     {
                         // Set damage accordingly.
                         // Set up attack info
                         Slamscray.Components.HealthDamageComponent.AttackInfo atk = new Components.HealthDamageComponent.AttackInfo();
                         atk.facingLeft = spriteSheet.FlippedX;
                         atk.impulseAmt = SHORYUKEN_PUSHAMT;
-                        dam.Attacked(SHORYUKEN_DAMAGE, atk);
+                        if (hypeMode)
+                        {
+                            atk.impulseAmt = SHORYUKEN_PUSHAMT * 2;
+                            dam.Attacked(SHORYUKEN_DAMAGE * 2, atk);
+                        }
+                        else
+                        {
+                            dam.Attacked(SHORYUKEN_DAMAGE, atk);
+                        }
                         dam.Invulnerable = true;
                         dam.InvulnTime = SHORYUKEN_INVTIME;
 
@@ -371,7 +402,7 @@ namespace Slamscray.Entities
                         {
                             Global.pauseTime = 18.0f;
                             Global.theCameraShaker.ShakeCamera(20.0f);
-                            dam.InvulnTime = SHORYUKEN_INVTIME / 3;
+                            dam.InvulnTime = SHORYUKEN_INVTIME / 6;
                             // Play sound
                             hypeShoryukenSound.Play();
                         }
@@ -389,6 +420,7 @@ namespace Slamscray.Entities
             }
             if (shoryukenTime <= 0)
             {
+                
                 shoryukenTime = 0;
                 myPlatforming.ExtraSpeed.X = 0;            
             }
@@ -414,7 +446,7 @@ namespace Slamscray.Entities
                         continue;
                     }
                     Slamscray.Components.HealthDamageComponent dam = ent.GetComponent<Slamscray.Components.HealthDamageComponent>();
-                    if (dam != null && dam.Invulnerable == false)
+                    if (dam != null && dam.Invulnerable == false && dam.Dead == false)
                     {
                         // Set damage accordingly.
                         // Set up attack info
@@ -467,6 +499,11 @@ namespace Slamscray.Entities
                 {
                     myMoveState = MoveState.FALL;
                 }
+            }
+
+            if(myPlatforming.HasJumped == false)
+            {
+                shoryukened = false; 
             }
         }
 
