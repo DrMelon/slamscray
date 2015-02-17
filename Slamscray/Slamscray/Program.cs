@@ -23,7 +23,7 @@ namespace Slamscray
             Global.theGame = new Game("SLAMSCRAY", 400, 240);
 
             // Viewing resolution is 720p
-            Global.theGame.SetWindow(400*2, 240*2, false, true);
+            Global.theGame.SetWindow(400*3, 240*3, false, true);
            // Global.theGame.SetWindow(1366, 768, true, true);
 
             

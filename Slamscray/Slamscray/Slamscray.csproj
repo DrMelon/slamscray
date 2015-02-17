@@ -43,6 +43,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets.cs" />
+    <Compile Include="Components\CombatMove.cs" />
+    <Compile Include="Components\CombatMoveShoryuken.cs" />
     <Compile Include="Entities\HUD.cs" />
     <Compile Include="Utils\CameraShaker.cs" />
     <Compile Include="Components\HealthDamageComponent.cs" />

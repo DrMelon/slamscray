@@ -15,7 +15,10 @@ namespace Slamscray.Entities
 {
     public class Stormdark : Entity
     {
-
+        //TODO: 
+        // Generalize combat moves into an object/component thing. So that the combat move checks its own timer etc.
+        // That way you can add and remove abilities, and each ability manages itself.
+        // Simply check for currentCombatMove & make sure it's not set to anything before performing a combat move.
         public enum MoveState { GROUND, SHORYUKEN, FALL, PUNCH, GRASP, SLAMUP, SLAMDOWN, DASHLEFT, DASHRIGHT };
 
         // Constants
