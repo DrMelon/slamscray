@@ -15,12 +15,13 @@ namespace Slamscray.Components
     {
 
         public static int DASH_TIME = 15;
+        public Speed DashSpeed;
 
         public CombatMoveDash() : base()
         {
             animationToPlay = "dashflash";
             moveLength = DASH_TIME;
-            isInterruptable = true;
+            isInterruptable = false;
             moveTime = moveLength;
         }
 
@@ -36,24 +37,16 @@ namespace Slamscray.Components
             if (moveTime > 0)
             {
                 // Move left/right depending on what direction we dashed in.
+                if (DashSpeed.X != 0)
+                {
+                    thePlayer.myPlatforming.ExtraSpeed.X = DashSpeed.X;
+                }
+                if (DashSpeed.Y != 0)
+                {
+                    thePlayer.myPlatforming.Speed.Y = DashSpeed.Y;
+                }
+                
 
-                if (thePlayer.myMoveState == Slamscray.Entities.Stormdark.MoveState.DASHLEFT)
-                {
-                    thePlayer.myPlatforming.ExtraSpeed.X = -650.0f;
-                }
-                if (thePlayer.myMoveState == Slamscray.Entities.Stormdark.MoveState.DASHRIGHT)
-                {
-                    thePlayer.myPlatforming.ExtraSpeed.X = 650.0f;
-                }
-                if (thePlayer.myMoveState == Slamscray.Entities.Stormdark.MoveState.DASHDOWN)
-                {
-                    thePlayer.myPlatforming.Speed.Y = 450.0f;
-                }
-                if (thePlayer.myMoveState == Slamscray.Entities.Stormdark.MoveState.DASHUP)
-                {
-                    thePlayer.myPlatforming.Speed.Y = -450.0f;
-                    thePlayer.spriteSheet.FlippedY = true;
-                }
                 
                 
 

@@ -259,35 +259,45 @@ namespace Slamscray.Entities
             // Dashing etc
             if (currentCombatMove == null || currentCombatMove.isInterruptable)
             {
+                currentCombatMove = null;
+                currentCombatMove = new CombatMoveDash();
+                CombatMoveDash refer = currentCombatMove as CombatMoveDash;
+                refer.DashSpeed = new Speed(1600);
+                refer.DashSpeed.X = 0;
+                refer.DashSpeed.Y = 0;
+
                 if (Global.playerSession.Controller.Left.Down)
                 {
                     // Dash left
                     myMoveState = MoveState.DASHLEFT;
-
+                    refer.DashSpeed.X = -650.0f;
 
                 }
                 if (Global.playerSession.Controller.Right.Down)
                 {
                     // Dash right
                     myMoveState = MoveState.DASHRIGHT;
+                    refer.DashSpeed.X = 650.0f;
                 }
 
-                /*
+                
                 if(Global.playerSession.Controller.Down.Down && myPlatforming.OnGround == false)
                 {
                     // Dash down / slam
                     myMoveState = MoveState.DASHDOWN;
+                    refer.DashSpeed.Y = 450.0f;
                 }
 
                 if (Global.playerSession.Controller.Up.Down )
                 {
                     // Dash down / slam
                     myMoveState = MoveState.DASHUP;
-                }*/
+
+                    refer.DashSpeed.Y = -450.0f;
+                }
+                
 
 
-                currentCombatMove = null;
-                currentCombatMove = new CombatMoveDash();
                 currentCombatMove.thePlayer = this;
                 currentCombatMove.Startup();
             }
@@ -424,6 +434,7 @@ namespace Slamscray.Entities
 
         public void UpdateAnimations()
         {
+            spriteSheet.FlippedY = false;
             if (myMoveState == MoveState.GRASP)
             {
                 spriteSheet.Play("grasp");
@@ -482,6 +493,7 @@ namespace Slamscray.Entities
             if (myMoveState == MoveState.DASHUP)
             {
                 spriteSheet.Play("dashflash_d");
+                spriteSheet.FlippedY = true;
                 HypeWhiteTrail();
             }
         }

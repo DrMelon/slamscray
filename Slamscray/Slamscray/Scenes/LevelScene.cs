@@ -108,7 +108,7 @@ namespace Slamscray.Scenes
             targetCamY = Global.thePlayer.Y - 16.0f; // Above player a little.
 
 
-            targetCamX = Util.Approach(this.CameraCenterX, targetCamX, 3.0f);
+            targetCamX = Util.Approach(this.CameraCenterX, targetCamX, 8.0f);
             targetCamY = Util.Approach(this.CameraCenterY, targetCamY, 8.0f);
 
             this.CenterCamera(targetCamX, targetCamY);
