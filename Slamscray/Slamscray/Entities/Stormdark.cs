@@ -272,6 +272,7 @@ namespace Slamscray.Entities
                     myMoveState = MoveState.DASHRIGHT;
                 }
 
+                /*
                 if(Global.playerSession.Controller.Down.Down && myPlatforming.OnGround == false)
                 {
                     // Dash down / slam
@@ -282,7 +283,7 @@ namespace Slamscray.Entities
                 {
                     // Dash down / slam
                     myMoveState = MoveState.DASHUP;
-                }
+                }*/
 
 
                 currentCombatMove = null;
