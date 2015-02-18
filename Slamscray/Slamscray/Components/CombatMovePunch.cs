@@ -7,48 +7,30 @@ using System.Threading.Tasks;
 using Slamscray;
 
 //@Author: J. Brown / DrMelon
-//@Purpose: This is the CombatMove for the Shoryuken movement.
+//@Purpose: This is the CombatMove for the Punch movement.
 
 namespace Slamscray.Components
 {
-    public class CombatMoveShoryuken : Slamscray.Components.CombatMove
+    public class CombatMovePunch : Slamscray.Components.CombatMove
     {
-        public static float SHORYUKEN_DAMAGE = 5.0f;
-        public static float SHORYUKEN_INVTIME = 45.0f;
-        public static float SHORYUKEN_PUSHAMT = 125.0f;
-        public static float SHORYUKEN_FREEZEAMT = 5.0f;
-        public static int SHORYUKEN_TIME = 36;
+        public static float PUNCH_DAMAGE = 1.0f;
+        public static float PUNCH_INVTIME = 10.0f;
+        public static float PUNCH_PUSHAMT = 50.0f;
+        public static float PUNCH_FREEZEAMT = 0.0f;
+        public static int PUNCH_TIME = 10;
 
-        public CombatMoveShoryuken() : base()
+        public CombatMovePunch() : base()
         {
-            animationToPlay = "shoryuken";
-            moveLength = SHORYUKEN_TIME;
+            animationToPlay = "punch";
+            moveLength = PUNCH_TIME;
             isInterruptable = false;
             moveTime = moveLength;
-            moveState = Entities.Stormdark.MoveState.SHORYUKEN;
+            moveState = Entities.Stormdark.MoveState.PUNCH;
         }
 
         public override void Startup()
         {
             thePlayer.myMoveState = moveState;
-            
-            // Shoryuken Startup - Push player into air, start moving to the left / right
-            thePlayer.myPlatforming.Speed.Y = -200.0f;
-
-            // Divide existing extraspeed by 8, so that we can get momentum from a dash but not go too far with it
-            thePlayer.myPlatforming.ExtraSpeed.X /= 8;
-            thePlayer.myPlatforming.ExtraSpeed.Y /= 8;
-
-            if (thePlayer.spriteSheet.FlippedX)
-            {
-                thePlayer.myPlatforming.ExtraSpeed.X -= 50.0f;
-            }
-            else
-            {
-                thePlayer.myPlatforming.ExtraSpeed.X += 50.0f;
-            }
-
-
         }
 
         public override void Update()
@@ -56,8 +38,8 @@ namespace Slamscray.Components
             // Update shoryuken state
             if (moveTime > 0)
             {
-                thePlayer.myPlatforming.HasJumped = true; //counts as a jump!
-                thePlayer.shoryukened = true;
+                // Speed down
+                thePlayer.myPlatforming.Speed.X = Util.Approach(thePlayer.myPlatforming.Speed.X, 0, thePlayer.myPlatforming.CurrentAccel / 1.3f);
 
                 // Damage anything we hit with a healthdamage component, and shove it around!
                 List<Entity> collisionList = thePlayer.myCollider.CollideEntities(thePlayer.X, thePlayer.Y, thePlayer.myCollider.Tags);
@@ -75,17 +57,17 @@ namespace Slamscray.Components
                         // Set up attack info
                         Slamscray.Components.HealthDamageComponent.AttackInfo atk = new Components.HealthDamageComponent.AttackInfo();
                         atk.facingLeft = thePlayer.spriteSheet.FlippedX;
-                        atk.impulseAmt = SHORYUKEN_PUSHAMT;
-                        dam.Attacked(SHORYUKEN_DAMAGE, atk);
+                        atk.impulseAmt = PUNCH_PUSHAMT;
+                        dam.Attacked(PUNCH_DAMAGE, atk);
                         dam.Invulnerable = true;
-                        dam.InvulnTime = SHORYUKEN_INVTIME;
+                        dam.InvulnTime = PUNCH_INVTIME;
 
                         // Freeze game a sec
                         Global.paused = true;
-                        Global.pauseTime = SHORYUKEN_FREEZEAMT;
+                        Global.pauseTime = PUNCH_FREEZEAMT;
 
                         // Play sound
-                        thePlayer.shoryukenSound.Play();
+                        thePlayer.punchSound.Play();
 
                         thePlayer.Scene.PauseGroup(Global.GROUP_ACTIVEOBJECTS);
                         thePlayer.hypeAmt += 5.0f;
@@ -97,7 +79,6 @@ namespace Slamscray.Components
             if (moveTime <= 0)
             {
                 moveTime = 0;
-                thePlayer.myPlatforming.ExtraSpeed.X = 0;
             }
         }
     }

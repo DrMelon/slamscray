@@ -4,6 +4,7 @@
 
 using Otter;
 using Slamscray;
+using Slamscray.Components;
 
 using System;
 using System.Collections.Generic;
@@ -19,39 +20,29 @@ namespace Slamscray.Entities
         // Generalize combat moves into an object/component thing. So that the combat move checks its own timer etc.
         // That way you can add and remove abilities, and each ability manages itself.
         // Simply check for currentCombatMove & make sure it's not set to anything before performing a combat move.
-        public enum MoveState { GROUND, SHORYUKEN, FALL, PUNCH, GRASP, SLAMUP, SLAMDOWN, DASHLEFT, DASHRIGHT };
+        public enum MoveState { GROUND, SHORYUKEN, FALL, PUNCH, GRASP, SLAMUP, SLAMDOWN, DASHLEFT, DASHRIGHT, DASHDOWN, DASHUP };
 
         // Constants
-        public static float SHORYUKEN_DAMAGE = 5.0f;
-        public static float SHORYUKEN_INVTIME = 45.0f;
-        public static float SHORYUKEN_PUSHAMT = 125.0f;
-        public static float SHORYUKEN_FREEZEAMT = 5.0f;
-        //public static float SHORYUKEN_FREEZEAMT = 18.0f; // Great for a more powerful hit... hype mode?
 
-        public static float PUNCH_DAMAGE = 1.0f;
-        public static float PUNCH_INVTIME = 10.0f;
-        public static float PUNCH_PUSHAMT = 50.0f;
-        public static float PUNCH_FREEZEAMT = 0.0f;
+
+
 
         public static float MOVESPEED = 150.0f;
         public static float HYPEMOVESPEED = 180.0f;
 
         public Spritemap<string> spriteSheet;
-        private PlatformingMovement myPlatforming;
-        private BoxCollider myCollider;
-        private Components.HealthDamageComponent myHealth;
+        public PlatformingMovement myPlatforming;
+        public BoxCollider myCollider;
+        public Components.HealthDamageComponent myHealth;
 
 
-        private Sound punchSound;
-        private Sound hypePunchSound;
-        private Sound shoryukenSound;
-        private Sound hypeShoryukenSound;
-        private Sound shingSound;
+        public Sound punchSound;
+        public Sound hypePunchSound;
+        public Sound shoryukenSound;
+        public Sound hypeShoryukenSound;
+        public Sound shingSound;
 
-        public float shoryukenTime = 0;
-        public float punchTime = 0;
-        public float dashTime = 0;
-
+        public CombatMove currentCombatMove = null;
         public MoveState myMoveState;
         public bool shoryukened = false; // used to prevent repeated air-ryukens.
 
@@ -88,11 +79,10 @@ namespace Slamscray.Entities
             spriteSheet.Add("punch", new int[] { 27, 29 }, new float[] { 2f, 8f });
             spriteSheet.Add("grasp", new int[] { 28, 29, 30, 31, 32, 33, 34, 35, 36}, new float[] { 4f, 4f, 2f, 2f, 2f, 2f, 8f, 16f, 16f } );
             spriteSheet.Add("dashflash", new int[] { 37, 38, 39, 40}, new float[] {3f, 3f, 3f, 3f});
+            spriteSheet.Add("dashflash_d", new int[] { 41, 42, 43, 44 }, new float[] { 3f, 3f, 3f, 3f });
 
             // Use idle animation to start
             spriteSheet.Play("idle");
-
-            
 
             // Set display to use this spritesheet
             Graphic = spriteSheet;
@@ -202,9 +192,9 @@ namespace Slamscray.Entities
             }
 
             myPlatforming.Speed.X = Util.Approach(myPlatforming.Speed.X, myPlatforming.TargetSpeed.X, myPlatforming.CurrentAccel);
-            if (myMoveState != MoveState.SHORYUKEN && myMoveState != MoveState.PUNCH && myMoveState != MoveState.DASHLEFT && myMoveState != MoveState.DASHRIGHT)
+            if (currentCombatMove == null)
             {
-                myPlatforming.ExtraSpeed.X = Util.Approach(myPlatforming.ExtraSpeed.X, 0, myPlatforming.CurrentAccel);
+                myPlatforming.ExtraSpeed.X = Util.Approach(myPlatforming.ExtraSpeed.X, 0, myPlatforming.CurrentAccel * 4);
             }
 
             if (myPlatforming.Speed.X < 0 && myPlatforming.AgainstWallLeft)
@@ -216,35 +206,37 @@ namespace Slamscray.Entities
                 myPlatforming.Speed.X = 0;
             }
 
+
+            // Update combat moves
+            if(currentCombatMove != null)
+            {
+                if(currentCombatMove.moveTime > 0)
+                {
+                    currentCombatMove.Update();
+                }
+                else
+                {
+                    currentCombatMove = null;
+                }
+            }
+
+
             // Update shoryuken state
             if (myMoveState != MoveState.SHORYUKEN && myMoveState != MoveState.DASHLEFT && myMoveState != MoveState.DASHRIGHT)
             {
-                CheckPunch();
+               // CheckPunch();
                 
             }
             if (myMoveState != MoveState.PUNCH && myMoveState != MoveState.DASHLEFT && myMoveState != MoveState.DASHRIGHT)
             {
-                CheckShoryuken();   
+                
             }
 
             if (myMoveState != MoveState.SHORYUKEN && myMoveState != MoveState.PUNCH)
             {
-                CheckDash();
+               // CheckDash();
             }
 
-
-            if (shoryukenTime > 0)
-            {
-                shoryukenTime--;
-            }
-            if (punchTime > 0)
-            {
-                punchTime--;
-            }
-            if (dashTime > 0)
-            {
-                dashTime--;
-            }
             
             // Update Animation
             UpdateMoveStates();
@@ -265,56 +257,85 @@ namespace Slamscray.Entities
         public void DashAct()
         {
             // Dashing etc
-            if(Global.playerSession.Controller.Left.Down)
+            if (currentCombatMove == null || currentCombatMove.isInterruptable)
             {
-                // Dash left
-                myMoveState = MoveState.DASHLEFT;
-                dashTime = 15.0f;
+                if (Global.playerSession.Controller.Left.Down)
+                {
+                    // Dash left
+                    myMoveState = MoveState.DASHLEFT;
 
-            }
-            if(Global.playerSession.Controller.Right.Down)
-            {
-                // Dash right
-                myMoveState = MoveState.DASHRIGHT;
-                dashTime = 15.0f;
 
+                }
+                if (Global.playerSession.Controller.Right.Down)
+                {
+                    // Dash right
+                    myMoveState = MoveState.DASHRIGHT;
+                }
+
+                if(Global.playerSession.Controller.Down.Down && myPlatforming.OnGround == false)
+                {
+                    // Dash down / slam
+                    myMoveState = MoveState.DASHDOWN;
+                }
+
+                if (Global.playerSession.Controller.Up.Down )
+                {
+                    // Dash down / slam
+                    myMoveState = MoveState.DASHUP;
+                }
+
+
+                currentCombatMove = null;
+                currentCombatMove = new CombatMoveDash();
+                currentCombatMove.thePlayer = this;
+                currentCombatMove.Startup();
             }
             
         }
 
         public void Attack()
         {
-          
-            // Uppercut
-            if (Global.playerSession.Controller.Up.Down && myMoveState != MoveState.SHORYUKEN && shoryukened == false)
+            if (currentCombatMove == null || currentCombatMove.isInterruptable)
             {
-
-
-
-                myMoveState = MoveState.SHORYUKEN;
-                shoryukenTime = 4 * 9;
-                // Leap into the air
-                myPlatforming.Speed.Y = -200.0f;
-                if(hypeMode)
+                // Uppercut
+                if (Global.playerSession.Controller.Up.Down && shoryukened == false)
                 {
-                    myPlatforming.Speed.Y = -300.0f;
-                }
-                if (spriteSheet.FlippedX)
-                {
-                    myPlatforming.ExtraSpeed.X -= 50.0f;
-                }
-                else
-                {
-                    myPlatforming.ExtraSpeed.X += 50.0f;
-                }
-            }
+                    if (hypeMode)
+                    {
+                        currentCombatMove = null;
+                        currentCombatMove = new CombatMoveHypeShoryuken();
+                    }
+                    else
+                    {
+                        currentCombatMove = null;
+                        currentCombatMove = new CombatMoveShoryuken();
+                    }
 
-            // Normal Punch
-            else if (myPlatforming.OnGround == true)
-            {
-                myMoveState = MoveState.PUNCH;
-                punchTime = 10; //10 frames
 
+                }
+
+                // Normal Punch
+                else if (myPlatforming.OnGround == true)
+                {
+                    if (hypeMode)
+                    {
+                        currentCombatMove = null;
+                        currentCombatMove = new CombatMoveHypePunch();
+                    }
+                    else
+                    {
+                        currentCombatMove = null;
+                        currentCombatMove = new CombatMovePunch();
+                    }
+                }
+
+
+
+                if(currentCombatMove != null)
+                {
+                    currentCombatMove.thePlayer = this;
+                    currentCombatMove.Startup();
+                }
             }
         }
 
@@ -372,8 +393,8 @@ namespace Slamscray.Entities
         {
             // Nice little white trail, fairly short, made of a shrinking white circle.
             Particle newParticle = new Particle(X + spriteSheet.HalfWidth, Y + spriteSheet.HalfHeight, Assets.PARTICLE_WHITE, 16, 16);
-            newParticle.FinalX = X + spriteSheet.HalfWidth;
-            newParticle.FinalY = Y + spriteSheet.HalfHeight;
+            newParticle.FinalX = X + spriteSheet.HalfWidth + Rand.Float(-4, 4);
+            newParticle.FinalY = Y + spriteSheet.HalfHeight + Rand.Float(-4, 4);
             newParticle.FinalScaleX = 0;
             newParticle.FinalScaleY = 0;
             newParticle.LifeSpan = 20.0f;
@@ -381,172 +402,17 @@ namespace Slamscray.Entities
             this.Scene.Add(newParticle);
         }
 
-        public void CheckShoryuken()
-        {
-
-            // Update shoryuken state
-            if (myMoveState == MoveState.SHORYUKEN && shoryukenTime > 0)
-            {
-                myPlatforming.HasJumped = true; //counts as a jump!
-                shoryukened = true;    
-
-                if (hypeMode)
-                {
-                    Starticles();
-                }
-
-                // Damage anything we hit with a healthdamage component, and shove it around!
-                List<Entity> collisionList = myCollider.CollideEntities(X, Y, myCollider.Tags);
-                foreach (Entity ent in collisionList)
-                {
-                    if(ent == this)
-                    {
-                        // Don't collide with yourself!
-                        continue;
-                    }
-                    Slamscray.Components.HealthDamageComponent dam = ent.GetComponent<Slamscray.Components.HealthDamageComponent>();
-                    if (dam != null && dam.Invulnerable == false && dam.Dead == false)
-                    {
-                        // Set damage accordingly.
-                        // Set up attack info
-                        Slamscray.Components.HealthDamageComponent.AttackInfo atk = new Components.HealthDamageComponent.AttackInfo();
-                        atk.facingLeft = spriteSheet.FlippedX;
-                        atk.impulseAmt = SHORYUKEN_PUSHAMT;
-                        if (hypeMode)
-                        {
-                            atk.impulseAmt = SHORYUKEN_PUSHAMT * 2;
-                            dam.Attacked(SHORYUKEN_DAMAGE * 2, atk);
-                        }
-                        else
-                        {
-                            dam.Attacked(SHORYUKEN_DAMAGE, atk);
-                        }
-                        dam.Invulnerable = true;
-                        dam.InvulnTime = SHORYUKEN_INVTIME;
-
-                        
-                        // Freeze game a sec
-                        Global.paused = true;
-                        Global.pauseTime = SHORYUKEN_FREEZEAMT;
-                        if(hypeMode)
-                        {
-                            Global.pauseTime = 18.0f;
-                            Global.theCameraShaker.ShakeCamera(20.0f);
-                            dam.InvulnTime = SHORYUKEN_INVTIME / 6;
-                            // Play sound
-                            hypeShoryukenSound.Play();
-                        }
-                        else
-                        {
-                            // Play sound
-                            shoryukenSound.Play();
-                        }
-                        this.Scene.PauseGroup(Global.GROUP_ACTIVEOBJECTS);
-                        hypeAmt += 5.0f;
-                    }
-                }
-
-
-            }
-            if (shoryukenTime <= 0)
-            {
-                
-                shoryukenTime = 0;
-                myPlatforming.ExtraSpeed.X = 0;            
-            }
-        }
-
-        public void CheckPunch()
-        {
-            if (myMoveState == MoveState.PUNCH && punchTime > 0)
-            {
-                // Speed down
-                myPlatforming.Speed.X = Util.Approach(myPlatforming.Speed.X, 0, myPlatforming.CurrentAccel / 1.3f);
-
-
-                
-
-                // Damage anything we hit with a healthdamage component, and shove it around!
-                List<Entity> collisionList = myCollider.CollideEntities(X, Y, myCollider.Tags);
-                foreach (Entity ent in collisionList)
-                {
-                    if (ent == this)
-                    {
-                        // Don't collide with yourself!
-                        continue;
-                    }
-                    Slamscray.Components.HealthDamageComponent dam = ent.GetComponent<Slamscray.Components.HealthDamageComponent>();
-                    if (dam != null && dam.Invulnerable == false && dam.Dead == false)
-                    {
-                        // Set damage accordingly.
-                        // Set up attack info
-                        Slamscray.Components.HealthDamageComponent.AttackInfo atk = new Components.HealthDamageComponent.AttackInfo();
-                        atk.facingLeft = spriteSheet.FlippedX;
-                        atk.impulseAmt = PUNCH_PUSHAMT;
-                        if(hypeMode)
-                        {
-                            atk.impulseAmt = PUNCH_PUSHAMT * 2;
-                        }
-                        dam.Attacked(PUNCH_DAMAGE, atk);
-                        dam.Invulnerable = true;
-                        dam.InvulnTime = PUNCH_INVTIME;
-
-                        // Freeze game a sec
-                        Global.paused = true;
-                        Global.pauseTime = PUNCH_FREEZEAMT;
-                        
-                        this.Scene.PauseGroup(Global.GROUP_ACTIVEOBJECTS);                      
-                        
-                        if(hypeMode)
-                        {
-                            Global.theCameraShaker.ShakeCamera();
-                            Starticles();
-                            //Playsound
-                            hypePunchSound.Play();
-                        }
-                        else
-                        {
-                            //Playsound
-                            punchSound.Play();
-                        }
-                        hypeAmt += 5.0f;
-                    }
-                }
-            }
-            if(punchTime <= 0)
-            {
-                punchTime = 0;
-            }
-        }
-
-        public void CheckDash()
-        {
-            if((myMoveState == MoveState.DASHLEFT || myMoveState == MoveState.DASHRIGHT) && dashTime > 0)
-            {
-                if(myMoveState == MoveState.DASHLEFT)
-                {
-                    myPlatforming.ExtraSpeed.X = -650.0f;
-                }
-                if (myMoveState == MoveState.DASHRIGHT)
-                {
-                    myPlatforming.ExtraSpeed.X = 650.0f;
-                }
-            }
-        }
 
         public void UpdateMoveStates()
         {
-            if ((punchTime <= 0) && (shoryukenTime <= 0) && (dashTime <= 0))
+            if (currentCombatMove == null)
             {
-
-                    myMoveState = MoveState.GROUND;
-                    // Check air
-                    if (!myPlatforming.OnGround)
-                    {
-                        myMoveState = MoveState.FALL;
-                    }
-                
-
+                myMoveState = MoveState.GROUND;
+                // Check air
+                if (!myPlatforming.OnGround)
+                {
+                    myMoveState = MoveState.FALL;
+                }
             }
 
             if(myPlatforming.HasJumped == false)
@@ -605,6 +471,16 @@ namespace Slamscray.Entities
             if(myMoveState == MoveState.DASHLEFT || myMoveState == MoveState.DASHRIGHT)
             {
                 spriteSheet.Play("dashflash");
+                HypeWhiteTrail();
+            }
+            if(myMoveState == MoveState.DASHDOWN)
+            {
+                spriteSheet.Play("dashflash_d");
+                HypeWhiteTrail();
+            }
+            if (myMoveState == MoveState.DASHUP)
+            {
+                spriteSheet.Play("dashflash_d");
                 HypeWhiteTrail();
             }
         }

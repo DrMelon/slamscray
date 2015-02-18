@@ -7,22 +7,22 @@ using System.Threading.Tasks;
 using Slamscray;
 
 //@Author: J. Brown / DrMelon
-//@Purpose: This is the CombatMove for the Shoryuken movement.
+//@Purpose: This is the CombatMove for the Hype version of the Shoryuken movement.
 
 namespace Slamscray.Components
 {
-    public class CombatMoveShoryuken : Slamscray.Components.CombatMove
+    public class CombatMoveHypeShoryuken : Slamscray.Components.CombatMove
     {
-        public static float SHORYUKEN_DAMAGE = 5.0f;
-        public static float SHORYUKEN_INVTIME = 45.0f;
-        public static float SHORYUKEN_PUSHAMT = 125.0f;
-        public static float SHORYUKEN_FREEZEAMT = 5.0f;
-        public static int SHORYUKEN_TIME = 36;
+        public static float HYPE_SHORYUKEN_DAMAGE = 10.0f;
+        public static float HYPE_SHORYUKEN_INVTIME = 7.0f;
+        public static float HYPE_SHORYUKEN_PUSHAMT = 250.0f;
+        public static float HYPE_SHORYUKEN_FREEZEAMT = 18.0f;
+        public static int HYPE_SHORYUKEN_TIME = 36;
 
-        public CombatMoveShoryuken() : base()
+        public CombatMoveHypeShoryuken() : base()
         {
             animationToPlay = "shoryuken";
-            moveLength = SHORYUKEN_TIME;
+            moveLength = HYPE_SHORYUKEN_TIME;
             isInterruptable = false;
             moveTime = moveLength;
             moveState = Entities.Stormdark.MoveState.SHORYUKEN;
@@ -30,14 +30,13 @@ namespace Slamscray.Components
 
         public override void Startup()
         {
+            // Hype Shoryuken Startup - Push player into air, start moving to the left / right
             thePlayer.myMoveState = moveState;
-            
-            // Shoryuken Startup - Push player into air, start moving to the left / right
-            thePlayer.myPlatforming.Speed.Y = -200.0f;
+            thePlayer.myPlatforming.Speed.Y = -300.0f;
 
-            // Divide existing extraspeed by 8, so that we can get momentum from a dash but not go too far with it
-            thePlayer.myPlatforming.ExtraSpeed.X /= 8;
-            thePlayer.myPlatforming.ExtraSpeed.Y /= 8;
+            // Divide existing extraspeed by 6, so that we can get momentum from a dash but not go too far with it
+            thePlayer.myPlatforming.ExtraSpeed.X /= 6;
+            thePlayer.myPlatforming.ExtraSpeed.Y /= 6;
 
             if (thePlayer.spriteSheet.FlippedX)
             {
@@ -59,6 +58,9 @@ namespace Slamscray.Components
                 thePlayer.myPlatforming.HasJumped = true; //counts as a jump!
                 thePlayer.shoryukened = true;
 
+                thePlayer.Starticles();
+              
+
                 // Damage anything we hit with a healthdamage component, and shove it around!
                 List<Entity> collisionList = thePlayer.myCollider.CollideEntities(thePlayer.X, thePlayer.Y, thePlayer.myCollider.Tags);
                 foreach (Entity ent in collisionList)
@@ -75,14 +77,18 @@ namespace Slamscray.Components
                         // Set up attack info
                         Slamscray.Components.HealthDamageComponent.AttackInfo atk = new Components.HealthDamageComponent.AttackInfo();
                         atk.facingLeft = thePlayer.spriteSheet.FlippedX;
-                        atk.impulseAmt = SHORYUKEN_PUSHAMT;
-                        dam.Attacked(SHORYUKEN_DAMAGE, atk);
+                        atk.impulseAmt = HYPE_SHORYUKEN_PUSHAMT;
+
+                        dam.Attacked(HYPE_SHORYUKEN_DAMAGE, atk);
                         dam.Invulnerable = true;
-                        dam.InvulnTime = SHORYUKEN_INVTIME;
+                        dam.InvulnTime = HYPE_SHORYUKEN_INVTIME;
+
 
                         // Freeze game a sec
                         Global.paused = true;
-                        Global.pauseTime = SHORYUKEN_FREEZEAMT;
+                        Global.pauseTime = HYPE_SHORYUKEN_FREEZEAMT;
+                        Global.theCameraShaker.ShakeCamera(20.0f);
+
 
                         // Play sound
                         thePlayer.shoryukenSound.Play();

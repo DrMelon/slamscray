@@ -16,24 +16,27 @@ using Slamscray.Entities;
 
 namespace Slamscray.Components
 {
-    class CombatMove
+    public class CombatMove
     {
         public Stormdark thePlayer = null;
         public string animationToPlay = "";
         public int moveLength = 0;
+        public bool isInterruptable = false;
 
-        private int moveTime;
+        public Entities.Stormdark.MoveState moveState;
 
-        CombatMove()
+        public int moveTime;
+
+        public CombatMove()
         {
             moveTime = moveLength;    
         }
 
-        public void Startup()
+        public virtual void Startup()
         {
         }
 
-        public void Update()
+        public virtual void Update()
         {
         }
 

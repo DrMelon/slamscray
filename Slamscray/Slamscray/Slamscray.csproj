@@ -44,6 +44,10 @@
   <ItemGroup>
     <Compile Include="Assets.cs" />
     <Compile Include="Components\CombatMove.cs" />
+    <Compile Include="Components\CombatMoveDash.cs" />
+    <Compile Include="Components\CombatMoveHypePunch.cs" />
+    <Compile Include="Components\CombatMoveHypeShoryuken.cs" />
+    <Compile Include="Components\CombatMovePunch.cs" />
     <Compile Include="Components\CombatMoveShoryuken.cs" />
     <Compile Include="Entities\HUD.cs" />
     <Compile Include="Utils\CameraShaker.cs" />
