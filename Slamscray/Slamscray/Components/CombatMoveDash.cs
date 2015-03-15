@@ -45,10 +45,6 @@ namespace Slamscray.Components
                 {
                     thePlayer.myPlatforming.Speed.Y = DashSpeed.Y;
                 }
-                
-
-                
-                
 
                 moveTime--;
             }

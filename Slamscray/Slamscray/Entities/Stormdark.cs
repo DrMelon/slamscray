@@ -220,23 +220,6 @@ namespace Slamscray.Entities
                 }
             }
 
-
-            // Update shoryuken state
-            if (myMoveState != MoveState.SHORYUKEN && myMoveState != MoveState.DASHLEFT && myMoveState != MoveState.DASHRIGHT)
-            {
-               // CheckPunch();
-                
-            }
-            if (myMoveState != MoveState.PUNCH && myMoveState != MoveState.DASHLEFT && myMoveState != MoveState.DASHRIGHT)
-            {
-                
-            }
-
-            if (myMoveState != MoveState.SHORYUKEN && myMoveState != MoveState.PUNCH)
-            {
-               // CheckDash();
-            }
-
             
             // Update Animation
             UpdateMoveStates();
@@ -296,7 +279,10 @@ namespace Slamscray.Entities
                     refer.DashSpeed.Y = -450.0f;
                 }
                 
-
+                if(hypeMode)
+                {
+                    currentCombatMove.isInterruptable = true;
+                }
 
                 currentCombatMove.thePlayer = this;
                 currentCombatMove.Startup();
